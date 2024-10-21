@@ -1,5 +1,5 @@
 {
-    "name": "@dailyco/realtime-ai-daily",
+    "name": "@daily-co/realtime-ai-daily",
     "version": "0.2.0",
     "license": "BSD-2-Clause",
     "main": "dist/index.js",
