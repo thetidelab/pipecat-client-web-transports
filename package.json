@@ -8,7 +8,7 @@
     "source": "src/index.ts",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/rtvi-ai/rtvi-client-web.git"
+        "url": "git+https://github.com/daily-co/realtime-ai-daily.git"
     },
     "files": [
         "dist",
@@ -36,5 +36,11 @@
     "dependencies": {
         "@daily-co/daily-js": "^0.72.0",
         "realtime-ai": "0.2.0"
-    }
+    },
+    "description": "Realtime AI Daily Transport Package",
+    "author": "Jon Taylor",
+    "bugs": {
+        "url": "https://github.com/daily-co/realtime-ai-daily/issues"
+    },
+    "homepage": "https://github.com/daily-co/realtime-ai-daily#readme"
 }
