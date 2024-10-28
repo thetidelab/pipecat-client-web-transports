@@ -1,6 +1,6 @@
 {
     "name": "@daily-co/realtime-ai-daily",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "license": "BSD-2-Clause",
     "main": "dist/index.js",
     "module": "dist/index.module.js",
@@ -35,7 +35,7 @@
     },
     "dependencies": {
         "@daily-co/daily-js": "^0.72.0",
-        "realtime-ai": "0.2.0"
+        "realtime-ai": "0.2.1"
     },
     "description": "Realtime AI Daily Transport Package",
     "author": "Jon Taylor",
