@@ -12,13 +12,14 @@ import Daily, {
 } from "@daily-co/daily-js";
 import {
   Participant,
+  RTVIClientOptions,
+  RTVIError,
+  RTVIMessage,
   Tracks,
   Transport,
   TransportStartError,
   TransportState,
-  RTVIClientOptions,
-  RTVIMessage,
-  RTVIError,
+  logger,
 } from "realtime-ai";
 
 export interface DailyTransportAuthBundle {
@@ -59,7 +60,7 @@ export class DailyTransport extends Transport {
 
     this.state = "disconnected";
 
-    console.debug("[RTVI Transport] Initialized");
+    logger.debug("[RTVI Transport] Initialized");
   }
 
   get state(): TransportState {
