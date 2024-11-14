@@ -34,7 +34,7 @@
         "typescript": "^5.2.2"
     },
     "dependencies": {
-        "@daily-co/daily-js": "^0.72.1",
+        "@daily-co/daily-js": "^0.73.0",
         "realtime-ai": "0.2.2"
     },
     "description": "Realtime AI Daily Transport Package",
