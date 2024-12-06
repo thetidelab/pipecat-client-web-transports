@@ -300,6 +300,9 @@ export class DailyTransport extends Transport {
     this._callbacks.onAvailableMicsUpdated?.(
       ev.availableDevices.filter((d) => d.kind === "audioinput")
     );
+    this._callbacks.onAvailableSpeakersUpdated?.(
+      ev.availableDevices.filter((d) => d.kind === "audiooutput")
+    );
   }
 
   private handleSelectedDevicesUpdated(
@@ -312,6 +315,10 @@ export class DailyTransport extends Transport {
     if (this._selectedMic?.deviceId !== ev.devices.mic) {
       this._selectedMic = ev.devices.mic;
       this._callbacks.onMicUpdated?.(ev.devices.mic as MediaDeviceInfo);
+    }
+    if (this._selectedSpeaker?.deviceId !== ev.devices.speaker) {
+      this._selectedSpeaker = ev.devices.speaker;
+      this._callbacks.onSpeakerUpdated?.(ev.devices.speaker as MediaDeviceInfo);
     }
   }
 
