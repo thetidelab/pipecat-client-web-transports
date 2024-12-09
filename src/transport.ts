@@ -178,12 +178,16 @@ export class DailyTransport extends Transport {
     const { devices } = await this._daily.enumerateDevices();
     const cams = devices.filter((d) => d.kind === "videoinput");
     const mics = devices.filter((d) => d.kind === "audioinput");
+    const speakers = devices.filter((d) => d.kind === "audiooutput");
     this._callbacks.onAvailableCamsUpdated?.(cams);
     this._callbacks.onAvailableMicsUpdated?.(mics);
+    this._callbacks.onAvailableSpeakersUpdated?.(speakers);
     this._selectedCam = infos.camera;
     this._callbacks.onCamUpdated?.(infos.camera as MediaDeviceInfo);
     this._selectedMic = infos.mic;
     this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
+    this._selectedSpeaker = infos.speaker;
+    this._callbacks.onSpeakerUpdated?.(infos.speaker as MediaDeviceInfo);
 
     // Instantiate audio observers
     if (!this._daily.isLocalAudioLevelObserverRunning())
