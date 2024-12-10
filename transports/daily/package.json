@@ -1,0 +1,40 @@
+{
+  "name": "@daily-co/realtime-ai-daily",
+  "version": "0.2.3",
+  "license": "BSD-2-Clause",
+  "main": "dist/index.js",
+  "module": "dist/index.module.js",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daily-co/realtime-ai-daily.git"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "parcel build --no-cache",
+    "dev": "parcel watch",
+    "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "eslint": "9.11.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1"
+  },
+  "dependencies": {
+    "@daily-co/daily-js": "^0.73.0",
+    "realtime-ai": "0.2.2"
+  },
+  "description": "Realtime AI Daily Transport Package",
+  "author": "Jon Taylor",
+  "bugs": {
+    "url": "https://github.com/daily-co/realtime-ai-daily/issues"
+  },
+  "homepage": "https://github.com/daily-co/realtime-ai-daily#readme"
+}
