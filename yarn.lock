@@ -932,10 +932,10 @@
     "@parcel/utils" "2.13.2"
     nullthrows "^1.1.1"
 
-"@pipecat-ai/client-js@0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@pipecat-ai/client-js/-/client-js-0.3.0.tgz#691fd3cb7ea21f48d61d4d40283b8dc142c27a4e"
-  integrity sha512-PT8CsjHJnQdHFRzorxvpRK8n3vApJntnwIq4blHwcF3HXNyRxP40HWRcdXPpx/n7o894EUULlI+QAuNYGPHEmA==
+"@pipecat-ai/client-js@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@pipecat-ai/client-js/-/client-js-0.3.1.tgz#d2178d78f8db854b2410ebdcf308275a868195ef"
+  integrity sha512-qUcZKPXP4rYzEZcNDVtCDj6RhieTYutFgF0hnC/v6Jq1T2KY9XrKrrioXY5wO1MlWRo2CzUvLDFfKw/KOWS9yA==
   dependencies:
     "@types/events" "^3.0.3"
     clone-deep "^4.0.1"
