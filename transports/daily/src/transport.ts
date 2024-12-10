@@ -21,7 +21,7 @@ import {
   TransportStartError,
   TransportState,
   logger,
-} from "realtime-ai";
+} from "@pipecat-ai/client-js";
 
 export interface DailyTransportAuthBundle {
   room_url: string;
@@ -40,7 +40,9 @@ export class DailyTransport extends Transport {
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
   private _selectedSpeaker: MediaDeviceInfo | Record<string, never> = {};
 
-  constructor({ dailyFactoryOptions = {} }: DailyTransportConstructorOptions = {}) {
+  constructor({
+    dailyFactoryOptions = {},
+  }: DailyTransportConstructorOptions = {}) {
     super();
     this._dailyFactoryOptions = dailyFactoryOptions;
   }

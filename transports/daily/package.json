@@ -1,6 +1,6 @@
 {
-  "name": "@daily-co/realtime-ai-daily",
-  "version": "0.2.3",
+  "name": "@pipecat-ai/daily-transport",
+  "version": "0.3.0",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
@@ -8,7 +8,7 @@
   "source": "src/index.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/daily-co/realtime-ai-daily.git"
+    "url": "git+https://github.com/pipecat-ai/pipecat-client-web-transports.git"
   },
   "files": [
     "dist",
@@ -29,12 +29,12 @@
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.73.0",
-    "realtime-ai": "0.2.2"
+    "@pipecat-ai/client-js": "0.3.0"
   },
-  "description": "Realtime AI Daily Transport Package",
-  "author": "Jon Taylor",
+  "description": "Pipecat Daily Transport Package",
+  "author": "Daily.co",
   "bugs": {
-    "url": "https://github.com/daily-co/realtime-ai-daily/issues"
+    "url": "https://github.com/pipecat-ai/pipecat-client-web-transports/issues"
   },
-  "homepage": "https://github.com/daily-co/realtime-ai-daily#readme"
+  "homepage": "https://github.com/pipecat-ai/pipecat-client-web-transports/blob/main/transports/daily-webrtc/README.md"
 }
