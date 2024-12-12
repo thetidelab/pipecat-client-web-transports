@@ -1,11 +1,18 @@
 # Gemini Live Websocket Transport
 
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/gemini)
+[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/geminiMultiModalLive/README.md)
+![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/gemini-live-websocket-transport)
+
 A real-time websocket transport implementation for interacting with Google's Gemini Multimodal Live API, supporting bidirectional audio and unidirectional text communication.
 
 ## Installation
 
-```bash
-npm install @pipecat-ai/client-js @pipecat-ai/real-time-websocket-transport @pipecat-ai/gemini-live-websocket-transport
+```bash copy
+npm install \
+@pipecat-ai/client-js \
+@pipecat-ai/real-time-websocket-transport \
+@pipecat-ai/gemini-live-websocket-transport
 ```
 
 ## Overview
@@ -15,6 +22,7 @@ The `GeminiLiveWebsocketTransport` class extends the `RealTimeWebsocketTransport
 ## Features
 
 - Real-time bidirectional communication with Gemini Multimodal Live
+- Input device management
 - Audio streaming support
 - Text message support
 - Automatic reconnection handling
