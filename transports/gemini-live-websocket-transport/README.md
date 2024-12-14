@@ -127,6 +127,3 @@ The transport includes comprehensive error handling for:
 
 ## License
 BSD-2 Clause
-
-## Contributing
-Feel free to submit issues and pull requests for improvements or bug fixes. Be nice :)

@@ -48,6 +48,10 @@ const rtviClient = new RTVIClient({
     enableMic: true,   // Default microphone on
     callbacks: {
       // Event handlers
+    },
+    params: {
+      baseUrl,
+      endpoints
     }
     // ...
 });
@@ -90,6 +94,3 @@ The transport includes error handling for:
 
 ## License
 BSD-2 Clause
-
-## Contributing
-Feel free to submit issues and pull requests for improvements or bug fixes. Be nice :)

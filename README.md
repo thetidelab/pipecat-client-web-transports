@@ -3,7 +3,7 @@
 [![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/transport)
 [![Discord](https://img.shields.io/discord/1239284677165056021)](https://discord.gg/pipecat)
 
-A mono-repo to house the various supported Transport options to be used with the pipecat-client-web library. Currently, there is a single transport: daily-transport.
+A mono-repo to house the various supported Transport options to be used with the pipecat-client-web library. Currently, there are two transports: `daily-transport` and `gemini-live-websocket-transport`.
 
 ## Documentation
 
@@ -18,28 +18,32 @@ Pipecat Transports are intended to be used in conjunction with a Pipecat web cli
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](https://github.com/pipecat-ai/pipecat/tree/main/examples/simple-chatbot)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/daily-transport)
 
-This Transport uses the [Daily](https://daily.co) video calling service to connect to a bot and stream media over a WebRTC connection. This Transport is the client-side counterpart to the Pipecat [DailyTransport component](https://docs.pipecat.ai/server/services/transport/daily).
+This Transport uses the [Daily](https://daily.co) audio and video calling service to connect to a bot and stream media over a WebRTC connection. This Transport is the client-side counterpart to the Pipecat [DailyTransport component](https://docs.pipecat.ai/server/services/transport/daily).
 
 Typical media flow using a DailyTransport:
 ```
-         Client                               Server          
- ┌───────────────────┐                ┌────────────────────┐  
- │                   │                │       Pipecat      │  
- │    RTVIClient     │  RTVI Messages │       Pipeline     │  
- │                   │       &        │                    │  
- │ ┌──────────────┐  │  WebRTC Media  │  ┌──────────────┐  │  
- │ │DailyTransport│◄─┼────────────────┼─►│DailyTransport│  │  
- │ └──────────────┘  │                │  └──┬────────▲──┘  │  
- │                   │                │     │        │     │  
- └───────────────────┘                │ ┌───▼─┐   ┌──┴──┐  │  
-                                      │ │ STT │   │ TTS │  │  
-                                      │ └──┬──┘   └──▲──┘  │  
-                                      │    │         │     │  
-                                      │    └►┌─────┬─┘     │  
-                                      │      │ LLM │       │  
-                                      │      └─────┘       │  
-                                      │                    │  
-                                      └────────────────────┘  
+                                                                                       
+                                       ┌────────────────────────────────────────────┐  
+                                       │                                            │  
+  ┌───────────────────┐                │                 Server       ┌─────────┐   │  
+  │                   │                │                              │Pipecat  │   │  
+  │      Client       │  RTVI Messages │                              │Pipeline │   │  
+  │                   │       &        │                              │         │   │  
+  │ ┌──────────────┐  │  WebRTC Media  │  ┌──────────────┐    media   │ ┌─────┐ │   │  
+  │ │DailyTransport│◄─┼────────────────┼─►│DailyTransport┼────────────┼─► STT │ │   │  
+  │ └──────────────┘  │                │  └───────▲──────┘     in     │ └──┬──┘ │   │  
+  │                   │                │          │                   │    │    │   │  
+  └───────────────────┘                │          │                   │ ┌──▼──┐ │   │  
+                                       │          │                   │ │ LLM │ │   │  
+                                       │          │                   │ └──┬──┘ │   │  
+                                       │          │                   │    │    │   │  
+                                       │          │                   │ ┌──▼──┐ │   │  
+                                       │          │     media         │ │ TTS │ │   │  
+                                       │          └───────────────────┼─┴─────┘ │   │  
+                                       │                 out          └─────────┘   │  
+                                       │                                            │  
+                                       └────────────────────────────────────────────┘  
+                                                                                       
 ```
 
 ### [GeminiLiveWebSocketTransport](transports/gemini-live-websocket-transport/README.md)
@@ -79,4 +83,13 @@ $ yarn workspace @pipecat-ai/gemini-live-websocket-transport build
 BSD-2 Clause
 
 ## Contributing
-Feel free to submit issues and pull requests for improvements or bug fixes. Be nice :)
+We welcome contributions from the community! Whether you're fixing bugs, improving documentation, or adding new features, here's how you can help:
+
+- **Found a bug?** Open an [issue](https://github.com/pipecat-ai/pipecat-client-web-transports/issues)
+- **Have a feature idea?** Start a [discussion](https://discord.gg/pipecat)
+- **Want to contribute code?** Check our [CONTRIBUTING.md](CONTRIBUTING.md) guide
+- **Documentation improvements?** [Docs](https://github.com/pipecat-ai/docs) PRs are always welcome
+
+Before submitting a pull request, please check existing issues and PRs to avoid duplicates.
+
+We aim to review all contributions promptly and provide constructive feedback to help get your changes merged.
