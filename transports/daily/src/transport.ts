@@ -158,15 +158,15 @@ export class DailyTransport extends Transport {
     return this._daily.localVideo();
   }
 
-  public startScreenShare(): void {
+  public startScreenShare() {
     this._daily.startScreenShare();
   }
 
-  public stopScreenShare(): void {
+  public stopScreenShare() {
     this._daily.stopScreenShare();
   }
 
-  get isSharingScreen(): boolean {
+  public get isSharingScreen(): boolean {
     return this._daily.localScreenAudio() || this._daily.localScreenVideo();
   }
 
