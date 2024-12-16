@@ -1,11 +1,17 @@
 # Real-Time Websocket Transport
 
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/realtime)
+[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/geminiMultiModalLive/README.md)
+![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/realtime-websocket-transport)
+
 A flexible abstract transport class for implementing connections to directly communicate with LLMs that support voice-to-voice modalities.
 
 ## Installation
 
-```bash
-npm install @pipecat-ai/client-js @pipecat-ai/real-time-websocket-transport
+```bash copy
+npm install \
+@pipecat-ai/client-js \
+@pipecat-ai/real-time-websocket-transport
 ```
 
 ## Overview
@@ -109,6 +115,3 @@ The transport supports emitting the events defined by the [RTVI Specification](h
 ## License
 
 BSD-2 Clause
-
-## Contributing
-Feel free to submit issues and pull requests for improvements or bug fixes. Be nice :)
