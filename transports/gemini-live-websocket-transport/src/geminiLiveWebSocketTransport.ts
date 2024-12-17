@@ -260,18 +260,13 @@ export class GeminiLiveWebsocketTransport extends RealTimeWebsocketTransport {
   }
 
   // Not implemented
-  startScreenShare(): void {
+  enableScreenShare(enable: boolean): void {
     logger.error(
       "startScreenShare not implemented for GeminiLiveWebsocketTransport"
     );
     throw new Error("Not implemented");
   }
-  stopScreenShare(): void {
-    logger.error(
-      "stopScreenShare not implemented for GeminiLiveWebsocketTransport"
-    );
-    throw new Error("Not implemented");
-  }
+
   public get isSharingScreen(): boolean {
     logger.error(
       "isSharingScreen not implemented for GeminiLiveWebsocketTransport"
