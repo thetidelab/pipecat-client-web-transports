@@ -1,8 +1,8 @@
-# Gemini Live Websocket Transport
+# OpenAI RealTime WebRTC Transport
 
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/gemini)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/openai-webrtc)
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
-![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/gemini-live-websocket-transport)
+![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/openai-realtime-webrtc-transport)
 
 A real-time websocket transport implementation for interacting with Google's Gemini Multimodal Live API, supporting bidirectional audio and unidirectional text communication.
 
@@ -11,17 +11,16 @@ A real-time websocket transport implementation for interacting with Google's Gem
 ```bash copy
 npm install \
 @pipecat-ai/client-js \
-@pipecat-ai/real-time-websocket-transport \
-@pipecat-ai/gemini-live-websocket-transport
+@pipecat-ai/openai-realtime-webrtc-transport
 ```
 
 ## Overview
 
-The `GeminiLiveWebsocketTransport` class extends the `RealTimeWebsocketTransport` to implement a fully functional [RTVI `Transport`](https://docs.pipecat.ai/client/reference/js/transports/transport). It provides a framework for implementing real-time communication directly with the [Gemini Multimodal Live](https://ai.google.dev/api/multimodal-live) voice-to-voice service. It handles media device management, audio/video streams, and state management for the connection.
+The `OpenAIRealTimeWebRTCTransport` is a fully functional [RTVI `Transport`](https://docs.pipecat.ai/client/reference/js/transports/transport). It provides a framework for implementing real-time communication directly with the [OpenAI Realtime API using WebRTC](https://platform.openai.com/docs/guides/realtime-webrtc) voice-to-voice service. It handles media device management, audio/video streams, and state management for the connection.
 
 ## Features
 
-- Real-time bidirectional communication with Gemini Multimodal Live
+- Real-time bidirectional communication with OpenAI Realtime API
 - Input device management
 - Audio streaming support
 - Text message support
@@ -34,17 +33,16 @@ The `GeminiLiveWebsocketTransport` class extends the `RealTimeWebsocketTransport
 ### Basic Setup
 
 ```javascript
-import { GeminiLiveWebsocketTransport, GeminiLLMServiceOptions } from '@pipecat-ai/gemini-live-websocket-transport';
+import { OpenAIRealTimeWebRTCTransport, OpenAIServiceOptions } from '@pipecat-ai/openai-realtime-webrtc-transport';
 
-const options: GeminiLLMServiceOptions = {
+const options: OpenAIServiceOptions = {
   api_key: 'YOUR_API_KEY',
-  generation_config: {
-    temperature: 0.7,
-    maxOutput_tokens: 1000
+  session_config: {
+    instructions: 'you are a confused jellyfish',
   }
 };
 
-const transport = new GeminiLiveWebsocketTransport(options);
+const transport = new OpenAIRealTimeWebRTCTransport(options);
 let RTVIConfig: RTVIClientOptions = {
   transport,
   ...
@@ -55,28 +53,29 @@ let RTVIConfig: RTVIClientOptions = {
 ### Configuration Options
 
 ```typescript
-interface GeminiLLMServiceOptions {
+interface OpenAIServiceOptions {
   api_key: string;                    // Required: Your Gemini API key
   initial_messages?: Array<{          // Optional: Initial conversation context
     content: string;
     role: string;
   }>;
-  generation_config?: {               // Optional: Generation parameters
-    candidate_count?: number;
-    maxOutput_tokens?: number;
-    temperature?: number;
-    top_p?: number;
-    top_k?: number;
-    presence_penalty?: number;
-    frequency_penalty?: number;
-    response_modalities?: string;
-    speech_config?: {
-      voice_config?: {
-        prebuilt_voice_config?: {
-          voice_name: "Puck" | "Charon" | "Kore" | "Fenrir" | "Aoede";
-        };
-      };
+  session_config?: {
+    modailities?: string;
+    instructions?: string;
+    voice?:
+      | "alloy"
+      | "ash"
+      | "ballad"
+      | "coral"
+      | "echo"
+      | "sage"
+      | "shimmer"
+      | "verse";
+    input_audio_transcription?: {
+      model: "whisper-1";
     };
+    temperature?: number;
+    max_tokens?: number | "inf";
   };
 }
 ```
@@ -92,7 +91,7 @@ rtviClient.registerHelper("llm", llmHelper);
 
 // at time of sending message...
 // Send text prompt message
-llmHelper.appendToMessages({ role: "user", content: 'Hello Gemini!' });
+llmHelper.appendToMessages({ role: "user", content: 'Hello OpenAI!' });
 ```
 
 ### Handling Events
@@ -125,7 +124,7 @@ The transport can be in one of the following states:
 
 The transport includes comprehensive error handling for:
 - Connection failures
-- Websocket errors
+- WebRTC connection errors
 - API key validation
 - Message transmission errors
 

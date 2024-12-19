@@ -49,7 +49,7 @@ Typical media flow using a DailyTransport:
 ### [GeminiLiveWebSocketTransport](transports/gemini-live-websocket-transport/README.md)
 [![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/gemini)
 [![README](https://img.shields.io/badge/README-goldenrod)](transports/gemini-live-websocket-transport/README.md)
-[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/geminiMultiModalLive/README.md)
+[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/gemini-live-websocket-transport)
 
 This Transport extends the [RealTimeWebSocketTransport](transports/realtime-websocket-transport/README) and connects directly to Gemini over a WebSocket connection using the Multimodal Live API. This type of transport is great for testing different services out without the need to build a server component. Just be aware that it is insecure since you will need to have access to your Gemini API Key client-side so not probably something you want to use in your production app.
@@ -66,6 +66,28 @@ Media flow using a GeminiLiveWebSocketTransport:
   │  └──────────────────────────────┘  │                │              │  
   │                                    │                └──────────────┘  
   └────────────────────────────────────┘                                  
+```
+
+### [OpenAIRealTimeWebRTCTransport](transports/gemini-live-websocket-transport/README.md)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/openai-webrtc)
+[![README](https://img.shields.io/badge/README-goldenrod)](transports/openai-realtime-webrtc-transport/README.md)
+[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
+![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/openai-realtime-webrtc-transport)
+
+This Transport connects directly to OpenAI over a WebRTC connection using the RealTime API. This type of transport is great for testing different services out without the need to build a server component. Just be aware that it is insecure since you will need to have access to your OpenAI API Key client-side so not probably something you want to use in your production app. It does not implement the Ephemeral Token process.
+
+Media flow using a OpenAIRealTimeWebRTCTransport:
+```
+                Client                                      Server        
+  ┌─────────────────────────────────────┐                                  
+  │                                     │                                  
+  │            RTVIClient               │                ┌──────────────┐  
+  │                                     │    Media over  │              │  
+  │  ┌───────────────────────────────┐  │      WebRTC    │    OpenAI    │  
+  │  │ OpenAIRealTimeWebRTCTransport │◄─┼────────────────┼─►  Server    │  
+  │  └───────────────────────────────┘  │                │              │  
+  │                                     │                └──────────────┘  
+  └─────────────────────────────────────┘                                  
 ```
 
 ## Local Development
