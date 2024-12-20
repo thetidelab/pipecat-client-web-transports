@@ -4,8 +4,14 @@ import {
   GeminiLLMServiceOptions,
 } from "@pipecat-ai/gemini-live-websocket-transport";
 
+import {
+  OpenAIRealTimeWebRTCTransport,
+  OpenAIServiceOptions,
+} from "@pipecat-ai/openai-realtime-webrtc-transport";
+
 // Import core Pipecat RTVI Client and types
 import {
+  LLMHelper,
   Transport,
   RTVIClient,
   RTVIEvent,
@@ -22,6 +28,7 @@ let audioDiv: HTMLDivElement;
 let toggleBotButton: HTMLButtonElement;
 let submitBtn: HTMLButtonElement;
 let rtviClient: RTVIClient;
+let llmHelper: LLMHelper;
 let botRunning = false;
 
 // Initialize the application when DOM is fully loaded
@@ -55,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initBot();
 });
 
-// Connect / Disconnect from Gemini Live bot
+// Connect / Disconnect from bot
 async function toggleBot() {
   toggleBotButton.disabled = true;
   if (botRunning) {
@@ -71,6 +78,39 @@ async function toggleBot() {
 
 // Initialize the bot with configuration
 async function initBot() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const service = urlParams.get("service") || "gemini";
+  const { transport, service_options } =
+    service === "gemini" ? initGeminiTransport() : initOpenAITransport();
+
+  // Configure RTVI client options
+  let RTVIConfig: RTVIClientOptions = {
+    transport,
+    params: {
+      baseUrl: "api",
+      requestData: { service_options },
+    },
+    enableMic: true,
+    enableCam: false,
+    timeout: 30 * 1000,
+  };
+  RTVIConfig.customConnectHandler = () => Promise.resolve();
+
+  // Create new RTVI client instance
+  rtviClient = new RTVIClient(RTVIConfig);
+  llmHelper = new LLMHelper({});
+  rtviClient.registerHelper("openai", llmHelper);
+
+  // Make RTVI client available globally for debugging
+  (window as any).client = rtviClient;
+
+  // Set up RTVI event handlers and initialize devices
+  setupEventHandlers(rtviClient);
+  await setupDevices();
+}
+
+// Initialize the Gemini LLM and its service options
+function initGeminiTransport() {
   // Configure Gemini LLM service options
   const llm_service_options: GeminiLLMServiceOptions = {
     api_key: import.meta.env.VITE_DANGEROUS_GEMINI_API_KEY,
@@ -102,28 +142,26 @@ async function initBot() {
     llm_service_options
   );
 
-  // Configure RTVI client options
-  let RTVIConfig: RTVIClientOptions = {
-    transport,
-    params: {
-      baseUrl: "api",
-      requestData: { llm_service_options },
+  return { transport, service_options: llm_service_options };
+}
+
+function initOpenAITransport() {
+  // Configure OpenAI LLM service options
+  const llm_service_options: OpenAIServiceOptions = {
+    api_key: import.meta.env.VITE_DANGEROUS_OPENAI_API_KEY,
+    session_config: {
+      instructions: "You are a pirate. You are looking for buried treasure.",
+      voice: "echo",
     },
-    enableMic: true,
-    enableCam: false,
-    timeout: 30 * 1000,
+    initial_messages: [{ role: "user", content: "Hello" }],
   };
-  RTVIConfig.customConnectHandler = () => Promise.resolve();
 
-  // Create new RTVI client instance
-  rtviClient = new RTVIClient(RTVIConfig);
+  // Initialize transport
+  let transport: Transport = new OpenAIRealTimeWebRTCTransport(
+    llm_service_options
+  );
 
-  // Make RTVI client available globally for debugging
-  window.client = rtviClient;
-
-  // Set up RTVI event handlers and initialize devices
-  setupEventHandlers(rtviClient);
-  await setupDevices();
+  return { transport, service_options: llm_service_options };
 }
 
 // Initialize and update available audio devices
@@ -176,7 +214,7 @@ async function disconnectBot() {
 }
 
 // Set up event handlers for RTVI client
-// https://docs.pipecat.ai/client/reference/js/callbacks#2-event-listeners
+// https://docs.pipecat.ai/client/js/api-reference/callbacks#2-event-listeners
 export async function setupEventHandlers(rtviClient: RTVIClient) {
   audioDiv = document.getElementById("audio") as HTMLDivElement;
 
@@ -256,6 +294,11 @@ export async function setupEventHandlers(rtviClient: RTVIClient) {
   });
 
   // multimodal live does not currently provide transcripts so this will not fire
+  rtviClient.on(RTVIEvent.BotTtsText, (data: BotTTSTextData) => {
+    console.log("[EVENT] BotTtsText", data);
+  });
+
+  // multimodal live does not currently provide transcripts so this will not fire
   rtviClient.on(RTVIEvent.BotTranscript, (data: BotTTSTextData) => {
     console.log("[EVENT] BotTranscript", data);
   });
@@ -303,7 +346,7 @@ export async function setupEventHandlers(rtviClient: RTVIClient) {
 // to be keyed under "send-text" in the RTVIMessage object.
 function sendUserMessage() {
   const textInput = document.getElementById("text-input")! as HTMLInputElement;
-  rtviClient.sendMessage(new RTVIMessage("send-text", textInput.value));
+  llmHelper.appendToMessages({ role: "user", content: textInput.value });
   textInput.value = "";
 }
 

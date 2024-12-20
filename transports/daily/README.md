@@ -1,6 +1,6 @@
 # Pipecat's Real-Time Voice Inference - Daily Transport
 
-[![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/daily)
+[![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.pipecat.ai/client/js/transports/daily)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/daily-transport)
 [![Demo](https://img.shields.io/badge/Demo-coral)](https://github.com/pipecat-ai/pipecat/tree/main/examples/simple-chatbot)
 
@@ -82,7 +82,7 @@ The transport can be in one of these states:
 
 ## Events
 
-The transport implements the various [RTVI event handlers](https://docs.pipecat.ai/client/reference/js/callbacks). Check out the docs or samples for more info.
+The transport implements the various [RTVI event handlers](https://docs.pipecat.ai/client/js/api-reference/callbacks). Check out the docs or samples for more info.
 
 ## Error Handling
 

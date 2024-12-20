@@ -7,6 +7,7 @@ import {
 
 import {
   logger,
+  RTVIActionRequestData,
   RTVIMessage,
   RTVIMessageType,
   TransportStartError,
@@ -203,8 +204,28 @@ export class GeminiLiveWebsocketTransport extends RealTimeWebsocketTransport {
   }
 
   sendMessage(message: RTVIMessage): void {
-    if (message?.type === "send-text") {
-      this._sendTextInput(message.data as string, "user");
+    switch (message.type) {
+      case "send-text":
+        this._sendTextInput(message.data as string, "user");
+        break;
+      case "action":
+        {
+          const data = message.data as RTVIActionRequestData;
+          if (data.action === "append_to_messages" && data.arguments) {
+            for (const a of data.arguments) {
+              if (a.name === "messages") {
+                const value = a.value as Array<{
+                  content: string;
+                  role: string;
+                }>;
+                for (const m of value) {
+                  this._sendTextInput(m.content, m.role);
+                }
+              }
+            }
+          }
+        }
+        break;
     }
   }
 

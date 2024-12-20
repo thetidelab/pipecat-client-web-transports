@@ -1,5 +1,5 @@
 {
-  "name": "@pipecat-ai/daily-transport",
+  "name": "@pipecat-ai/openai-realtime-webrtc-transport",
   "version": "0.3.4",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
@@ -24,7 +24,8 @@
     "@pipecat-ai/client-js": "~0.3.2",
     "eslint": "9.11.1",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-simple-import-sort": "^12.1.1"
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "@types/node": "^22.9.0"
   },
   "peerDependencies": {
     "@pipecat-ai/client-js": "~0.3.2"
@@ -32,10 +33,10 @@
   "dependencies": {
     "@daily-co/daily-js": "^0.73.0"
   },
-  "description": "Pipecat Daily Transport Package",
+  "description": "Pipecat OpenAI RealTime Transport Package",
   "author": "Daily.co",
   "bugs": {
     "url": "https://github.com/pipecat-ai/pipecat-client-web-transports/issues"
   },
-  "homepage": "https://github.com/pipecat-ai/pipecat-client-web-transports/blob/main/transports/daily-webrtc/README.md"
+  "homepage": "https://github.com/pipecat-ai/pipecat-client-web-transports/blob/main/transports/openai-llm-direct-transport/README.md"
 }

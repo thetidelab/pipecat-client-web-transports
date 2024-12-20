@@ -5,6 +5,9 @@
   "workspaces": [
     "transports/*"
   ],
+  "scripts": {
+    "build": "npm run build --workspaces"
+  },
   "devDependencies": {
     "@parcel/packager-ts": "^2.13.2",
     "@parcel/transformer-typescript-tsc": "^2.13.2",
