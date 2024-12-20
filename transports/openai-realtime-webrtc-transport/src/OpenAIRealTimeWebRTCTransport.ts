@@ -228,6 +228,21 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     return this._daily.localAudio();
   }
 
+  // Not implemented
+  enableScreenShare(enable: boolean): void {
+    logger.error(
+      "startScreenShare not implemented for GeminiLiveWebsocketTransport"
+    );
+    throw new Error("Not implemented");
+  }
+
+  public get isSharingScreen(): boolean {
+    logger.error(
+      "isSharingScreen not implemented for GeminiLiveWebsocketTransport"
+    );
+    return false;
+  }
+
   tracks(): Tracks {
     const participants = this._daily?.participants() ?? {};
 
