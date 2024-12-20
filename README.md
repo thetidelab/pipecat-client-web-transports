@@ -73,10 +73,8 @@ Media flow using a GeminiLiveWebSocketTransport:
 ### Build the transport libraries
 
 ```bash
-$ yarn
-$ yarn workspace @pipecat-ai/daily-transport build
-$ yarn workspace @pipecat-ai/realtime-websocket-transport build
-$ yarn workspace @pipecat-ai/gemini-live-websocket-transport build
+$ npm i
+$ npm run build
 ```
 
 ## License
