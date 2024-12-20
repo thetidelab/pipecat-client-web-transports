@@ -9,6 +9,7 @@ import {
   Transport,
   TransportStartError,
   TransportState,
+  logger,
 } from "@pipecat-ai/client-js";
 
 // here we use Daily just for input device management
