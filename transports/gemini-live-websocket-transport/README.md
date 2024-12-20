@@ -1,6 +1,6 @@
 # Gemini Live Websocket Transport
 
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/gemini)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/gemini)
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/gemini-live-websocket-transport)
 
@@ -17,7 +17,7 @@ npm install \
 
 ## Overview
 
-The `GeminiLiveWebsocketTransport` class extends the `RealTimeWebsocketTransport` to implement a fully functional [RTVI `Transport`](https://docs.pipecat.ai/client/reference/js/transports/transport). It provides a framework for implementing real-time communication directly with the [Gemini Multimodal Live](https://ai.google.dev/api/multimodal-live) voice-to-voice service. It handles media device management, audio/video streams, and state management for the connection.
+The `GeminiLiveWebsocketTransport` class extends the `RealTimeWebsocketTransport` to implement a fully functional [RTVI `Transport`](https://docs.pipecat.ai/client/js/transports/transport). It provides a framework for implementing real-time communication directly with the [Gemini Multimodal Live](https://ai.google.dev/api/multimodal-live) voice-to-voice service. It handles media device management, audio/video streams, and state management for the connection.
 
 ## Features
 
@@ -97,7 +97,7 @@ llmHelper.appendToMessages({ role: "user", content: 'Hello Gemini!' });
 
 ### Handling Events
 
-The transport implements the various [RTVI event handlers](https://docs.pipecat.ai/client/reference/js/callbacks). Check out the docs or samples for more info.
+The transport implements the various [RTVI event handlers](https://docs.pipecat.ai/client/js/api-reference/callbacks). Check out the docs or samples for more info.
 
 ## API Reference
 

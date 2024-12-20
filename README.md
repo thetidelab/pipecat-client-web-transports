@@ -1,19 +1,19 @@
 # Pipecat Client Web Transports
 
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/transport)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/transport)
 [![Discord](https://img.shields.io/discord/1239284677165056021)](https://discord.gg/pipecat)
 
 A mono-repo to house the various supported Transport options to be used with the pipecat-client-web library. Currently, there are two transports: `daily-transport` and `gemini-live-websocket-transport`.
 
 ## Documentation
 
-Pipecat Transports are intended to be used in conjunction with a Pipecat web client. Please refer to the full Pipecat client documentation [here](https://docs.pipecat.ai/client/introduction) and an overview of the [Transport API here](https://docs.pipecat.ai/client/reference/js/transports/transport)
+Pipecat Transports are intended to be used in conjunction with a Pipecat web client. Please refer to the full Pipecat client documentation [here](https://docs.pipecat.ai/client/introduction) and an overview of the [Transport API here](https://docs.pipecat.ai/client/js/transports/transport)
 
 ## Current Transports
 
 ### [DailyTransport](/transports/daily/README.md)
 
-[![Docs](https://img.shields.io/badge/Documention-blue)](https://docs.pipecat.ai/client/reference/js/transports/daily)
+[![Docs](https://img.shields.io/badge/Documention-blue)](https://docs.pipecat.ai/client/js/transports/daily)
 [![README](https://img.shields.io/badge/README-goldenrod)](/transports/daily/README.md)
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](https://github.com/pipecat-ai/pipecat/tree/main/examples/simple-chatbot)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/daily-transport)
@@ -47,7 +47,7 @@ Typical media flow using a DailyTransport:
 ```
 
 ### [GeminiLiveWebSocketTransport](transports/gemini-live-websocket-transport/README.md)
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/gemini)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/gemini)
 [![README](https://img.shields.io/badge/README-goldenrod)](transports/gemini-live-websocket-transport/README.md)
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/gemini-live-websocket-transport)
@@ -69,7 +69,7 @@ Media flow using a GeminiLiveWebSocketTransport:
 ```
 
 ### [OpenAIRealTimeWebRTCTransport](transports/gemini-live-websocket-transport/README.md)
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/openai-webrtc)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/openai-webrtc)
 [![README](https://img.shields.io/badge/README-goldenrod)](transports/openai-realtime-webrtc-transport/README.md)
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/openai-realtime-webrtc-transport)

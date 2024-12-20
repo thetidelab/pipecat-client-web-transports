@@ -1,6 +1,6 @@
 # OpenAI RealTime WebRTC Transport
 
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/openai-webrtc)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/openai-webrtc)
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/openai-realtime-webrtc-transport)
 
@@ -16,7 +16,7 @@ npm install \
 
 ## Overview
 
-The `OpenAIRealTimeWebRTCTransport` is a fully functional [RTVI `Transport`](https://docs.pipecat.ai/client/reference/js/transports/transport). It provides a framework for implementing real-time communication directly with the [OpenAI Realtime API using WebRTC](https://platform.openai.com/docs/guides/realtime-webrtc) voice-to-voice service. It handles media device management, audio/video streams, and state management for the connection.
+The `OpenAIRealTimeWebRTCTransport` is a fully functional [RTVI `Transport`](https://docs.pipecat.ai/client/js/transports/transport). It provides a framework for implementing real-time communication directly with the [OpenAI Realtime API using WebRTC](https://platform.openai.com/docs/guides/realtime-webrtc) voice-to-voice service. It handles media device management, audio/video streams, and state management for the connection.
 
 ## Features
 
@@ -54,7 +54,7 @@ let RTVIConfig: RTVIClientOptions = {
 
 ```typescript
 interface OpenAIServiceOptions {
-  api_key: string;                    // Required: Your Gemini API key
+  api_key: string;                    // Required: Your OpenAI API key
   initial_messages?: Array<{          // Optional: Initial conversation context
     content: string;
     role: string;
@@ -96,7 +96,7 @@ llmHelper.appendToMessages({ role: "user", content: 'Hello OpenAI!' });
 
 ### Handling Events
 
-The transport implements the various [RTVI event handlers](https://docs.pipecat.ai/client/reference/js/callbacks). Check out the docs or samples for more info.
+The transport implements the various [RTVI event handlers](https://docs.pipecat.ai/client/js/api-reference/callbacks). Check out the docs or samples for more info.
 
 ## API Reference
 

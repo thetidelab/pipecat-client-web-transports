@@ -214,7 +214,7 @@ async function disconnectBot() {
 }
 
 // Set up event handlers for RTVI client
-// https://docs.pipecat.ai/client/reference/js/callbacks#2-event-listeners
+// https://docs.pipecat.ai/client/js/api-reference/callbacks#2-event-listeners
 export async function setupEventHandlers(rtviClient: RTVIClient) {
   audioDiv = document.getElementById("audio") as HTMLDivElement;
 
