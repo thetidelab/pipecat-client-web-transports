@@ -1,10 +1,11 @@
-# Pipecat (RTVI) Client Demo with Gemini Multimodal Live
+# Pipecat (RTVI) Client Demo for Direct Communication with LLMs
 
 ## Overview
-This application demonstrates a real-time voice interaction system using the RTVI Client library with Gemini Multimodal Live integration. It enables two-way communication between users and the LLM, featuring voice input/output, text messaging, and various audio controls.
+This application demonstrates a real-time voice interaction system using the RTVI Client library with both the Gemini Multimodal Live and OpenAI RealTime WebRTC integrations. It enables two-way communication between users and the LLM, featuring voice input/output, text messaging, and various audio controls.
 
 ## Features
-- Real-time voice interaction with an Gemini Multimodal Live bot
+- Real-time voice interaction with a Gemini Multimodal Live bot
+- Real-time voice interaction with an OpenAI RealTime bot
 - Microphone input control and device selection
 - Text-based message prompting
 - Audio visualization through dynamic speech bubbles
@@ -13,6 +14,7 @@ This application demonstrates a real-time voice interaction system using the RTV
 
 ## Prerequisites
 - Gemini API key (set as environment variable `VITE_DANGEROUS_GEMINI_API_KEY`)
+- OpenAI API key (set as environment variable `VITE_DANGEROUS_OPENAI_API_KEY`)
 - Modern web browser with WebSocket support
 - Access to microphone
 
@@ -20,8 +22,7 @@ This application demonstrates a real-time voice interaction system using the RTV
 ```
 # from base folder
 $ yarn
-$ yarn workspace @pipecat-ai/realtime-websocket-transport build
-$ yarn workspace @pipecat-ai/gemini-live-websocket-transport
+$ yarn workspaces run build
 ```
 
 
@@ -34,11 +35,18 @@ cp env.example .env
 # update .env with API keys
 ```
 
+### To run the example with Gemini MultiModal Live:
+
 Open [http://localhost:5173/](http://localhost:5173/)
+
+### To run the example with OpenAI RealTime:
+
+Open [http://localhost:5173?service=openai](http://localhost:5173?service=openai)
 
 ## Documentation Reference
 [RTVI Client Documentation](https://docs.pipecat.ai/client/introduction)
 [Gemini Multimodal Live Documentation](https://ai.google.dev/api/multimodal-live)
+[OpenAI RealTime WebRTC Documentation](https://platform.openai.com/docs/guides/realtime-webrtc)
 
 ## Usage
 
@@ -89,11 +97,16 @@ const llm_service_options: GeminiLLMServiceOptions = {
 };
 ```
 
+### Gemini Multimodal Live Service Configuration
+```typescript
+const llm_service_options: OpenAIServiceOptions = {
+  api_key: import.meta.env.VITE_DANGEROUS_OPENAI_API_KEY,
+  // ... additional configuration
+};
+```
+
 ## Notes
 - Gemini integration currently does not support transcripts
-
-## Contributing
-Feel free to submit issues and pull requests for improvements or bug fixes. Be nice :)
 
 ## License
 BSD-2 Clause

@@ -1,7 +1,7 @@
 # Real-Time Websocket Transport
 
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/realtime)
-[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/geminiMultiModalLive/README.md)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/realtime)
+[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/realtime-websocket-transport)
 
 A flexible abstract transport class for implementing connections to directly communicate with LLMs that support voice-to-voice modalities.
@@ -26,7 +26,7 @@ The `RealTimeWebsocketTransport` class provides a foundation for building transp
 
 ## Disclaimer
 
-This Transport type is primarily intended for dev-only and testing purposes. Since this transport talks directly with the LLM, there is no way to obscure API Keys necessary for doing so. Developers will need to eventually build a server component with a server-friendly transport (See the [daily-transport](https://docs.pipecat.ai/client/reference/js/transports/daily) as an example.)
+This Transport type is primarily intended for dev-only and testing purposes. Since this transport talks directly with the LLM, there is no way to obscure API Keys necessary for doing so. Developers will need to eventually build a server component with a server-friendly transport (See the [daily-transport](https://docs.pipecat.ai/client/js/transports/daily) as an example.)
 
 ## Usage
 
@@ -110,7 +110,7 @@ constructor(service_options: LLMServiceOptions, manager: MediaManager)
 - `get isMicEnabled(): boolean`
 
 ## Events
-The transport supports emitting the events defined by the [RTVI Specification](https://docs.pipecat.ai/client/reference/js/callbacks)
+The transport supports emitting the events defined by the [RTVI Specification](https://docs.pipecat.ai/client/js/api-reference/callbacks)
 
 ## License
 

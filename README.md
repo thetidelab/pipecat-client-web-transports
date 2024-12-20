@@ -1,19 +1,19 @@
 # Pipecat Client Web Transports
 
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/transport)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/transport)
 [![Discord](https://img.shields.io/discord/1239284677165056021)](https://discord.gg/pipecat)
 
 A mono-repo to house the various supported Transport options to be used with the pipecat-client-web library. Currently, there are two transports: `daily-transport` and `gemini-live-websocket-transport`.
 
 ## Documentation
 
-Pipecat Transports are intended to be used in conjunction with a Pipecat web client. Please refer to the full Pipecat client documentation [here](https://docs.pipecat.ai/client/introduction) and an overview of the [Transport API here](https://docs.pipecat.ai/client/reference/js/transports/transport)
+Pipecat Transports are intended to be used in conjunction with a Pipecat web client. Please refer to the full Pipecat client documentation [here](https://docs.pipecat.ai/client/introduction) and an overview of the [Transport API here](https://docs.pipecat.ai/client/js/transports/transport)
 
 ## Current Transports
 
 ### [DailyTransport](/transports/daily/README.md)
 
-[![Docs](https://img.shields.io/badge/Documention-blue)](https://docs.pipecat.ai/client/reference/js/transports/daily)
+[![Docs](https://img.shields.io/badge/Documention-blue)](https://docs.pipecat.ai/client/js/transports/daily)
 [![README](https://img.shields.io/badge/README-goldenrod)](/transports/daily/README.md)
 [![Demo](https://img.shields.io/badge/Demo-forestgreen)](https://github.com/pipecat-ai/pipecat/tree/main/examples/simple-chatbot)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/daily-transport)
@@ -47,9 +47,9 @@ Typical media flow using a DailyTransport:
 ```
 
 ### [GeminiLiveWebSocketTransport](transports/gemini-live-websocket-transport/README.md)
-[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/reference/js/transports/gemini)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/gemini)
 [![README](https://img.shields.io/badge/README-goldenrod)](transports/gemini-live-websocket-transport/README.md)
-[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/geminiMultiModalLive/README.md)
+[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
 ![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/gemini-live-websocket-transport)
 
 This Transport extends the [RealTimeWebSocketTransport](transports/realtime-websocket-transport/README) and connects directly to Gemini over a WebSocket connection using the Multimodal Live API. This type of transport is great for testing different services out without the need to build a server component. Just be aware that it is insecure since you will need to have access to your Gemini API Key client-side so not probably something you want to use in your production app.
@@ -66,6 +66,28 @@ Media flow using a GeminiLiveWebSocketTransport:
   │  └──────────────────────────────┘  │                │              │  
   │                                    │                └──────────────┘  
   └────────────────────────────────────┘                                  
+```
+
+### [OpenAIRealTimeWebRTCTransport](transports/gemini-live-websocket-transport/README.md)
+[![Docs](https://img.shields.io/badge/Documentation-blue)](https://docs.pipecat.ai/client/js/transports/openai-webrtc)
+[![README](https://img.shields.io/badge/README-goldenrod)](transports/openai-realtime-webrtc-transport/README.md)
+[![Demo](https://img.shields.io/badge/Demo-forestgreen)](examples/directToLLMTransports/README.md)
+![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/openai-realtime-webrtc-transport)
+
+This Transport connects directly to OpenAI over a WebRTC connection using the RealTime API. This type of transport is great for testing different services out without the need to build a server component. Just be aware that it is insecure since you will need to have access to your OpenAI API Key client-side so not probably something you want to use in your production app. It does not implement the Ephemeral Token process.
+
+Media flow using a OpenAIRealTimeWebRTCTransport:
+```
+                Client                                      Server        
+  ┌─────────────────────────────────────┐                                  
+  │                                     │                                  
+  │            RTVIClient               │                ┌──────────────┐  
+  │                                     │    Media over  │              │  
+  │  ┌───────────────────────────────┐  │      WebRTC    │    OpenAI    │  
+  │  │ OpenAIRealTimeWebRTCTransport │◄─┼────────────────┼─►  Server    │  
+  │  └───────────────────────────────┘  │                │              │  
+  │                                     │                └──────────────┘  
+  └─────────────────────────────────────┘                                  
 ```
 
 ## Local Development
