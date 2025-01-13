@@ -97,7 +97,7 @@ const llm_service_options: GeminiLLMServiceOptions = {
 };
 ```
 
-### OpenAI Multimodal Live Service Configuration
+### OpenAI Realtime API Service Configuration
 ```typescript
 const llm_service_options: OpenAIServiceOptions = {
   api_key: import.meta.env.VITE_DANGEROUS_OPENAI_API_KEY,
