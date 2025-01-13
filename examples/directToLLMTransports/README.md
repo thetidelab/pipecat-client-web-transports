@@ -97,13 +97,15 @@ const llm_service_options: GeminiLLMServiceOptions = {
 };
 ```
 
-### Gemini Multimodal Live Service Configuration
+### OpenAI Realtime API Service Configuration
 ```typescript
 const llm_service_options: OpenAIServiceOptions = {
   api_key: import.meta.env.VITE_DANGEROUS_OPENAI_API_KEY,
   // ... additional configuration
 };
 ```
+
+By default it uses `gpt-4o-realtime-preview-2024-12-17`
 
 ## Notes
 - Gemini integration currently does not support transcripts
