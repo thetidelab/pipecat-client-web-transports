@@ -97,6 +97,8 @@ const llm_service_options: GeminiLLMServiceOptions = {
 };
 ```
 
+For all service options and their defaults, see [GeminiLLMServiceOptions](../../transports/gemini-live-websocket-transport/src/geminiLiveWebSocketTransport.ts#21)
+
 ### OpenAI Realtime API Service Configuration
 ```typescript
 const llm_service_options: OpenAIServiceOptions = {
@@ -105,7 +107,7 @@ const llm_service_options: OpenAIServiceOptions = {
 };
 ```
 
-By default it uses `gpt-4o-realtime-preview-2024-12-17`
+For all service options and their defaults, see [OpenAIServiceOptions](../../transports/openai-realtime-webrtc-transport/src/OpenAIRealTimeWebRTCTransport.ts#28)
 
 ## Notes
 - Gemini integration currently does not support transcripts
