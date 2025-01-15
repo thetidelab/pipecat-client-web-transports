@@ -5,13 +5,21 @@ All notable changes to **Pipecat Daily WebRTC Transport** will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed an issue where the transport could call `clientReady()` multiple times,
+  once for each `track-started` event. Now, `clientReady()` is called for the
+  first track only.
+
 ## [0.3.4] - 2024-12-16
 
 ### Added
 
 - Screen sharing support
-    - Added `startScreenShare` and `stopScreenShare` methods
-    - Added `isSharingScreen` getter property
+  - Added `startScreenShare` and `stopScreenShare` methods
+  - Added `isSharingScreen` getter property
 
 ## [0.3.3] - 2024-12-11
 
