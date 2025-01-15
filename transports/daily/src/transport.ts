@@ -261,13 +261,15 @@ export class DailyTransport extends Transport {
   async sendReadyMessage(): Promise<void> {
     return new Promise<void>((resolve) => {
       (async () => {
-        this._daily.on("track-started", (ev) => {
+        const readyHandler = (ev: DailyEventObjectTrack) => {
           if (!ev.participant?.local) {
             this.state = "ready";
             this.sendMessage(RTVIMessage.clientReady());
+            this._daily.off("track-started", readyHandler);
             resolve();
           }
-        });
+        };
+        this._daily.on("track-started", readyHandler);
       })();
     });
   }
