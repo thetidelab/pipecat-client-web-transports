@@ -24,34 +24,108 @@ import {
   logger,
 } from "@pipecat-ai/client-js";
 
+import {MediaStreamRecorder} from "../../../lib/wavtools";
+
 export interface DailyTransportAuthBundle {
   room_url: string;
   token: string;
 }
 
 export interface DailyTransportConstructorOptions {
+  bufferLocalAudioUntilBotReady?: boolean;
   dailyFactoryOptions?: DailyFactoryOptions;
+}
+
+export enum DailyRTVIMessageType {
+  AUDIO_BUFFERING_STARTED = "audio-buffering-started",
+  AUDIO_BUFFERING_STOPPED = "audio-buffering-stopped",
 }
 
 export class DailyTransport extends Transport {
   private declare _daily: DailyCall;
   private _dailyFactoryOptions: DailyFactoryOptions;
+  private _bufferLocalAudioUntilBotReady: boolean;
   private _botId: string = "";
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
   private _selectedSpeaker: MediaDeviceInfo | Record<string, never> = {};
 
+  private static RECORDER_SAMPLE_RATE = 16_000
+  private static RECORDER_CHUNK_SIZE = 512
+  private _currentAudioTrack: MediaStreamTrack | null = null;
+  private _audioQueue: ArrayBuffer[] = [];
+  private declare _mediaStreamRecorder: MediaStreamRecorder;
+
   constructor({
     dailyFactoryOptions = {},
+    bufferLocalAudioUntilBotReady = false,
   }: DailyTransportConstructorOptions = {}) {
     super();
     this._dailyFactoryOptions = dailyFactoryOptions;
+    this._bufferLocalAudioUntilBotReady = bufferLocalAudioUntilBotReady;
+  }
+
+  private setupRecorder(): void {
+    this._mediaStreamRecorder = new MediaStreamRecorder({
+      sampleRate: DailyTransport.RECORDER_SAMPLE_RATE
+    });
+  }
+
+  handleUserAudioStream(data: ArrayBuffer): void {
+    this._audioQueue.push(data);
+  }
+
+  private flushAudioQueue(): void {
+    const batchSize = 10; // Number of buffers to send in one message
+    if (this._audioQueue.length === 0) {
+      return;
+    }
+
+    logger.debug(`Will flush audio queue: ${this._audioQueue.length}`);
+
+    while (this._audioQueue.length > 0) {
+      const batch: ArrayBuffer[] = [];
+
+      // Collect up to `batchSize` items
+      while (batch.length < batchSize && this._audioQueue.length > 0) {
+        const queuedData = this._audioQueue.shift();
+        if (queuedData) batch.push(queuedData);
+      }
+
+      if (batch.length > 0) {
+        this._sendAudioBatch(batch);
+      }
+    }
+  }
+
+  _sendAudioBatch(dataBatch: ArrayBuffer[]): void {
+    const encodedBatch = dataBatch.map(data => {
+      const pcmByteArray = new Uint8Array(data);
+      return btoa(String.fromCharCode(...pcmByteArray));
+    });
+
+    const rtviMessage: RTVIMessage = {
+      id: 'raw-audio-batch',
+      label: 'rtvi-ai',
+      type: 'raw-audio-batch',
+      data: {
+        base64AudioBatch: encodedBatch, // Sending an array of base64 strings
+        sampleRate: DailyTransport.RECORDER_SAMPLE_RATE,
+        numChannels: 1
+      }
+    };
+
+    this.sendMessage(rtviMessage);
   }
 
   public initialize(
     options: RTVIClientOptions,
     messageHandler: (ev: RTVIMessage) => void
   ): void {
+    if (this._bufferLocalAudioUntilBotReady) {
+      this.setupRecorder()
+    }
+
     this._callbacks = options.callbacks ?? {};
     this._onMessage = messageHandler;
 
@@ -193,6 +267,25 @@ export class DailyTransport extends Transport {
     return tracks;
   }
 
+  private async startRecording(): Promise<void> {
+    try {
+      logger.info('[RTVI Transport] Initializing recording');
+      await this._mediaStreamRecorder.record((data) => {
+        this.handleUserAudioStream(data.mono);
+      }, DailyTransport.RECORDER_CHUNK_SIZE);
+      this._onMessage({
+        type: DailyRTVIMessageType.AUDIO_BUFFERING_STARTED,
+        data: {},
+      } as RTVIMessage);
+      logger.info('[RTVI Transport] Recording Initialized');
+    } catch (e) {
+      const err = e as Error;
+      if (!err.message.includes("Already recording")) {
+        logger.error("Error starting recording", e);
+      }
+    }
+  }
+
   async initDevices() {
     if (!this._daily) {
       throw new RTVIError("Transport instance not initialized");
@@ -264,7 +357,9 @@ export class DailyTransport extends Transport {
         const readyHandler = (ev: DailyEventObjectTrack) => {
           if (!ev.participant?.local) {
             this.state = "ready";
+            this.flushAudioQueue();
             this.sendMessage(RTVIMessage.clientReady());
+            this.stopRecording();
             this._daily.off("track-started", readyHandler);
             resolve();
           }
@@ -272,6 +367,17 @@ export class DailyTransport extends Transport {
         this._daily.on("track-started", readyHandler);
       })();
     });
+  }
+
+  private stopRecording() {
+    if (this._mediaStreamRecorder && this._mediaStreamRecorder.getStatus() !== "ended") {
+      // disconnecting, we don't need to record anymore
+      void this._mediaStreamRecorder.end();
+      this._onMessage({
+        type: DailyRTVIMessageType.AUDIO_BUFFERING_STOPPED,
+        data: {},
+      } as RTVIMessage);
+    }
   }
 
   private attachEventListeners() {
@@ -304,6 +410,10 @@ export class DailyTransport extends Transport {
   async disconnect() {
     this._daily.stopLocalAudioLevelObserver();
     this._daily.stopRemoteParticipantsAudioLevelObserver();
+
+    this._audioQueue = []
+    this._currentAudioTrack = null
+    this.stopRecording()
 
     await this._daily.leave();
     await this._daily.destroy();
@@ -355,6 +465,35 @@ export class DailyTransport extends Transport {
     }
   }
 
+  private async handleLocalAudioTrack(track: MediaStreamTrack) {
+    if(this.state == "ready" || !this._bufferLocalAudioUntilBotReady){
+      return;
+    }
+    const status = this._mediaStreamRecorder.getStatus();
+    switch (status) {
+      case "ended":
+        await this._mediaStreamRecorder.begin(track);
+        await this.startRecording();
+        break;
+      case "paused":
+        await this.startRecording();
+        break;
+      case "recording":
+      default:
+        if (this._currentAudioTrack !== track) {
+          await this._mediaStreamRecorder.end();
+          await this._mediaStreamRecorder.begin(track);
+          await this.startRecording();
+        } else {
+          logger.warn(
+              "track-started event received for current track and already recording"
+          );
+        }
+        break;
+    }
+    this._currentAudioTrack = track;
+  }
+
   private handleTrackStarted(ev: DailyEventObjectTrack) {
     if (ev.type === "screenAudio" || ev.type === "screenVideo") {
       this._callbacks.onScreenTrackStarted?.(
@@ -364,6 +503,9 @@ export class DailyTransport extends Transport {
           : undefined
       );
     } else {
+      if (ev.participant?.local && ev.track.kind === "audio") {
+        void this.handleLocalAudioTrack(ev.track)
+      }
       this._callbacks.onTrackStarted?.(
         ev.track,
         ev.participant

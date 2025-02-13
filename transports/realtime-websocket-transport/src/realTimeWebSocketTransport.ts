@@ -8,7 +8,7 @@ import {
   TransportState,
 } from "@pipecat-ai/client-js";
 
-import { MediaManager } from "../lib/media-mgmt/mediaManager";
+import { MediaManager } from "../../../lib/media-mgmt/mediaManager";
 
 export interface LLMServiceOptions {
   initial_message?: Array<unknown>;

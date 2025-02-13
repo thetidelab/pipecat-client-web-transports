@@ -1,5 +1,5 @@
 import { MediaManager } from "./mediaManager";
-import { MediaStreamRecorder, WavStreamPlayer } from "../wavtools/index.js";
+import { MediaStreamRecorder, WavStreamPlayer } from "../wavtools";
 
 import Daily, {
   DailyCall,
