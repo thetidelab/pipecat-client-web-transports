@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   once for each `track-started` event. Now, `clientReady()` is called for the
   first track only.
 
+- Added support for buffering audio until the bot is ready using the `bufferLocalAudioUntilBotReady`
+  property. Once the bot is ready, the buffered audio will be sent, allowing the user to begin speaking before the bot has joined the call.
+
 ## [0.3.4] - 2024-12-16
 
 ### Added

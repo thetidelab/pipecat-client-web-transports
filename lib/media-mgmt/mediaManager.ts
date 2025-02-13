@@ -1,4 +1,4 @@
-import { WavRecorder, WavStreamPlayer } from "../wavtools/index.js";
+import { WavRecorder, WavStreamPlayer } from "../wavtools";
 
 import {
   RTVIClientOptions,
@@ -9,7 +9,7 @@ import {
 export abstract class MediaManager {
   protected declare _userAudioCallback: (data: ArrayBuffer) => void;
   protected declare _options: RTVIClientOptions;
-  protected declare _callbacks: RTVIEventCallbacks;
+  protected _callbacks: RTVIEventCallbacks = {};
 
   protected _micEnabled: boolean;
 
@@ -63,10 +63,12 @@ export class WavMediaManager extends MediaManager {
   private _wavStreamPlayer;
 
   private _initialized = false;
+  private _recorderChunkSize: number | undefined = undefined;
 
-  constructor() {
+  constructor(recorderChunkSize: number| undefined = undefined, recorderSampleRate: number | undefined = 24000) {
     super();
-    this._wavRecorder = new WavRecorder({ sampleRate: 24000 });
+    this._recorderChunkSize = recorderChunkSize
+    this._wavRecorder = new WavRecorder({ sampleRate: recorderSampleRate });
     this._wavStreamPlayer = new WavStreamPlayer({ sampleRate: 24000 });
   }
 
@@ -84,12 +86,16 @@ export class WavMediaManager extends MediaManager {
     if (!this._initialized) {
       await this.initialize();
     }
-    if (this._micEnabled) {
+    const isAlreadyRecording = this._wavRecorder.getStatus() == 'recording'
+    if (this._micEnabled && !isAlreadyRecording) {
       await this._startRecording();
     }
   }
 
   async disconnect(): Promise<void> {
+    if (!this._initialized) {
+      return
+    }
     await this._wavRecorder.end();
     await this._wavStreamPlayer.interrupt();
     this._initialized = false;
@@ -184,7 +190,7 @@ export class WavMediaManager extends MediaManager {
   private async _startRecording() {
     await this._wavRecorder.record((data) => {
       this._userAudioCallback(data.mono);
-    });
+    }, this._recorderChunkSize);
     const track = this._wavRecorder.stream?.getAudioTracks()[0];
     if (track) {
       this._callbacks.onTrackStarted?.(track, localParticipant());
