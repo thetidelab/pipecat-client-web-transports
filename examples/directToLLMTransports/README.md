@@ -21,8 +21,8 @@ This application demonstrates a real-time voice interaction system using the RTV
 ## Dependencies
 ```
 # from base folder
-$ yarn
-$ yarn workspaces run build
+$ npm i
+$ npm run build
 ```
 
 
