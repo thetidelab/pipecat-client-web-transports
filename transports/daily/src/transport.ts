@@ -50,14 +50,29 @@ class DailyCallWrapper {
     this._proxy = new Proxy(this._daily, {
       get: (target, prop, receiver) => {
         if (typeof target[prop as keyof DailyCall] === "function") {
-          // Disable certain methods
-          if (
-            ["preAuth", "startCamera", "join", "leave", "destroy"].includes(
-              String(prop)
-            )
-          ) {
+          let errMsg;
+          switch (String(prop)) {
+            // Disable methods that modify the lifecycle of the call. These operations
+            // should be performed via the RTVI client in order to keep state in sync.
+            case "preAuth":
+              errMsg = `Calls to preAuth() are disabled.`;
+              break;
+            case "startCamera":
+              errMsg = `Calls to startCamera() are disabled. Please use RTVIClient.initDevices()`;
+              break;
+            case "join":
+              errMsg = `Calls to join() are disabled. Please use RTVIClient.connect()`;
+              break;
+            case "leave":
+              errMsg = `Calls to leave() are disabled. Please use RTVIClient.disconnect()`;
+              break;
+            case "destroy":
+              errMsg = `Calls to destroy() are disabled.`;
+              break;
+          }
+          if (errMsg) {
             return () => {
-              throw new Error(`The ${String(prop)} method is disabled.`);
+              throw new Error(errMsg);
             };
           }
           // Forward other method calls
@@ -73,10 +88,6 @@ class DailyCallWrapper {
 
   get proxy(): DailyCall {
     return this._proxy;
-  }
-
-  get instance(): DailyCall {
-    return this._daily;
   }
 }
 
@@ -191,7 +202,7 @@ export class DailyTransport extends Transport {
     logger.debug("[RTVI Transport] Initialized");
   }
 
-  get dailyInstance(): DailyCall {
+  get dailyCallClient(): DailyCall {
     return this._dailyWrapper.proxy;
   }
 
