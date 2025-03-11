@@ -16,6 +16,7 @@ import {
   Participant,
   RTVIClientOptions,
   RTVIError,
+  RTVIEventCallbacks,
   RTVIMessage,
   Tracks,
   Transport,
@@ -55,10 +56,10 @@ class DailyCallWrapper {
             // Disable methods that modify the lifecycle of the call. These operations
             // should be performed via the RTVI client in order to keep state in sync.
             case "preAuth":
-              errMsg = `Calls to preAuth() are disabled.`;
+              errMsg = `Calls to preAuth() are disabled. Please use Transport.preAuth()`;
               break;
             case "startCamera":
-              errMsg = `Calls to startCamera() are disabled. Please use RTVIClient.initDevices()`;
+              errMsg = `Calls to startCamera() are disabled. Please use RTVIClient.initDevices() or Transport.initDevices()`;
               break;
             case "join":
               errMsg = `Calls to join() are disabled. Please use RTVIClient.connect()`;
@@ -95,6 +96,7 @@ export class DailyTransport extends Transport {
   private declare _dailyWrapper: DailyCallWrapper;
   private declare _daily: DailyCall;
   private _dailyFactoryOptions: DailyFactoryOptions;
+
   private _bufferLocalAudioUntilBotReady: boolean;
   private _botId: string = "";
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
@@ -112,8 +114,16 @@ export class DailyTransport extends Transport {
     bufferLocalAudioUntilBotReady = false,
   }: DailyTransportConstructorOptions = {}) {
     super();
+    this._callbacks = {} as RTVIEventCallbacks;
+
     this._dailyFactoryOptions = dailyFactoryOptions;
     this._bufferLocalAudioUntilBotReady = bufferLocalAudioUntilBotReady;
+
+    this._daily = Daily.createCallObject({
+      ...this._dailyFactoryOptions,
+      allowMultipleCallInstances: true,
+    });
+    this._dailyWrapper = new DailyCallWrapper(this._daily);
   }
 
   private setupRecorder(): void {
@@ -180,20 +190,20 @@ export class DailyTransport extends Transport {
     this._callbacks = options.callbacks ?? {};
     this._onMessage = messageHandler;
 
-    const existingInstance = Daily.getCallInstance();
-    if (existingInstance) {
-      void existingInstance.destroy();
-    }
-
-    this._daily = Daily.createCallObject({
-      ...this._dailyFactoryOptions,
+    if (
+      this._dailyFactoryOptions.startVideoOff == null ||
+      options.enableCam != null
+    ) {
       // Default is cam off
-      startVideoOff: options.enableCam != true,
+      this._dailyFactoryOptions.startVideoOff = !(options.enableCam ?? false);
+    }
+    if (
+      this._dailyFactoryOptions.startAudioOff == null ||
+      options.enableMic != null
+    ) {
       // Default is mic on
-      startAudioOff: options.enableMic == false,
-      allowMultipleCallInstances: true,
-    });
-    this._dailyWrapper = new DailyCallWrapper(this._daily);
+      this._dailyFactoryOptions.startAudioOff = !(options.enableMic ?? true);
+    }
 
     this.attachEventListeners();
 
@@ -301,7 +311,7 @@ export class DailyTransport extends Transport {
   }
 
   tracks() {
-    const participants = this._daily?.participants() ?? {};
+    const participants = this._daily.participants() ?? {};
     const bot = participants?.[this._botId];
 
     const tracks: Tracks = {
@@ -342,6 +352,11 @@ export class DailyTransport extends Transport {
     }
   }
 
+  async preAuth(dailyFactoryOptions: DailyFactoryOptions) {
+    this._dailyFactoryOptions = dailyFactoryOptions;
+    await this._daily.preAuth(dailyFactoryOptions);
+  }
+
   async initDevices() {
     if (!this._daily) {
       throw new RTVIError("Transport instance not initialized");
@@ -354,14 +369,15 @@ export class DailyTransport extends Transport {
     const cams = devices.filter((d) => d.kind === "videoinput");
     const mics = devices.filter((d) => d.kind === "audioinput");
     const speakers = devices.filter((d) => d.kind === "audiooutput");
+    this._selectedCam = infos.camera;
+    this._selectedMic = infos.mic;
+    this._selectedSpeaker = infos.speaker;
+
     this._callbacks.onAvailableCamsUpdated?.(cams);
     this._callbacks.onAvailableMicsUpdated?.(mics);
     this._callbacks.onAvailableSpeakersUpdated?.(speakers);
-    this._selectedCam = infos.camera;
     this._callbacks.onCamUpdated?.(infos.camera as MediaDeviceInfo);
-    this._selectedMic = infos.mic;
     this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
-    this._selectedSpeaker = infos.speaker;
     this._callbacks.onSpeakerUpdated?.(infos.speaker as MediaDeviceInfo);
 
     // Instantiate audio observers
@@ -385,17 +401,20 @@ export class DailyTransport extends Transport {
 
     this.state = "connecting";
 
+    const opts = this._dailyFactoryOptions;
+    opts.url = authBundle.room_url ?? opts.url;
+    if (authBundle.token != null) {
+      opts.token = authBundle.token;
+    }
     try {
-      await this._daily.join({
-        url: authBundle.room_url,
-        token: authBundle.token,
-      });
+      await this._daily.join(opts);
 
       const room = await this._daily.room();
       if (room && "id" in room) {
         this._expiry = room.config?.exp;
       }
     } catch (e) {
+      logger.error("Failed to join room", e);
       this.state = "error";
       throw new TransportStartError();
     }
@@ -467,6 +486,7 @@ export class DailyTransport extends Transport {
   }
 
   async disconnect() {
+    this.state = "disconnecting";
     this._daily.stopLocalAudioLevelObserver();
     this._daily.stopRemoteParticipantsAudioLevelObserver();
 
@@ -475,7 +495,6 @@ export class DailyTransport extends Transport {
     this.stopRecording();
 
     await this._daily.leave();
-    await this._daily.destroy();
   }
 
   public sendMessage(message: RTVIMessage) {
@@ -636,7 +655,7 @@ export class DailyTransport extends Transport {
   }
 
   private handleLeftMeeting() {
-    this.state = "disconnecting";
+    this.state = "disconnected";
     this._botId = "";
     this._callbacks.onDisconnected?.();
   }
