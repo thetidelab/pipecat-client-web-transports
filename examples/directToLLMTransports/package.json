@@ -12,13 +12,13 @@
   "license": "BSD-2-Clause",
   "description": "",
   "dependencies": {
-    "@pipecat-ai/realtime-websocket-transport": "file:../../transports/realtime-websocket-transport",
+    "@pipecat-ai/client-js": "^0.3.4",
     "@pipecat-ai/gemini-live-websocket-transport": "file:../../transports/gemini-live-websocket-transport",
     "@pipecat-ai/openai-realtime-webrtc-transport": "file:../../transports/openai-realtime-webrtc-transport",
+    "@pipecat-ai/realtime-websocket-transport": "file:../../transports/realtime-websocket-transport",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "morgan": "^1.10.0",
-    "@pipecat-ai/client-js": "^0.3.1"
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

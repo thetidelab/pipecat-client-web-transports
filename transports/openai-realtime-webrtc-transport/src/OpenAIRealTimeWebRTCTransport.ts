@@ -156,6 +156,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     await this._disconnectLLM();
     this.state = "disconnected";
     this._callbacks.onDisconnected?.();
+
+    this.initialize(this._options, this._onMessage);
   }
 
   get state(): TransportState {
