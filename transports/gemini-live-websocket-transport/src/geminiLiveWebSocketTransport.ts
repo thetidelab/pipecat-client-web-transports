@@ -254,7 +254,7 @@ export class GeminiLiveWebsocketTransport extends RealTimeWebsocketTransport {
             parts: [{ text }],
           },
         ],
-        turnComplete: true,
+        turnComplete: role === "user" ? true : false,
       },
     };
     await this._sendMsg(msg);
