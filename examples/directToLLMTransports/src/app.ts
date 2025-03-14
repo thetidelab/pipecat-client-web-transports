@@ -120,10 +120,10 @@ function initGeminiTransport() {
       // Without the user message, the bot will not respond immediately
       // and wait for the user to speak first.
       {
-        role: "system",
-        content: "You are a helpful assistant...",
+        role: "model",
+        content: "You are a pencil salesman...",
       },
-      { role: "user", content: "Hello, ExampleBot!" },
+      { role: "user", content: "Hello!" },
     ],
     generation_config: {
       speech_config: {
