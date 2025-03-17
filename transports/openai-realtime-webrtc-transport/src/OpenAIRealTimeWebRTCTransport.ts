@@ -1,4 +1,6 @@
 import {
+  LLMFunctionCallData,
+  LLMMessageType,
   Participant,
   RTVIActionRequestData,
   RTVIClientOptions,
@@ -25,6 +27,14 @@ import Daily, {
 const BASE_URL = "https://api.openai.com/v1/realtime";
 const MODEL = "gpt-4o-realtime-preview-2024-12-17";
 
+type JSONSchema = { [key: string]: any };
+export interface OpenAIFunctionTool {
+  type: "function";
+  name: string;
+  description: string;
+  parameters: JSONSchema;
+}
+
 export interface OpenAIServiceOptions {
   api_key: string;
   model?: string;
@@ -46,6 +56,7 @@ export interface OpenAIServiceOptions {
     };
     temperature?: number;
     max_tokens?: number | "inf";
+    tools?: Array<OpenAIFunctionTool>;
   };
 }
 
@@ -279,14 +290,27 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   sendMessage(message: RTVIMessage): void {
     if (message.type === "action") {
       const data = message.data as RTVIActionRequestData;
-      if (data.action === "append_to_messages" && data.arguments) {
-        for (const a of data.arguments) {
-          if (a.name === "messages") {
-            const value = a.value as Array<{ content: string; role: string }>;
-            this._sendTextInput(value);
+      switch (data.action) {
+        case "append_to_messages":
+          if (data.arguments) {
+            for (const a of data.arguments) {
+              if (a.name === "messages") {
+                const value = a.value as Array<{
+                  content: string;
+                  role: string;
+                }>;
+                this._sendTextInput(value);
+              }
+            }
           }
-        }
+          break;
+        case "get_context":
+        case "set_context":
+          console.warn("get_context and set_context not implemented");
+          break;
       }
+    } else if (message.type === LLMMessageType.LLM_FUNCTION_CALL_RESULT) {
+      this._sendFunctionCallResult(message.data as LLMFunctionCallData);
     }
   }
 
@@ -507,6 +531,33 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       case "response.done":
         console.log("BOT DONE", msg);
         break;
+      case "response.function_call_arguments.delta":
+        {
+          console.log("function call arguments delta", msg);
+          // let data: LLMFunctionCallData = {
+          //   function_name: msg.name,
+          //   tool_call_id: msg.call_id,
+          //   args: JSON.parse(msg.arguments),
+          // };
+          // this._onMessage({
+          //   type: LLMMessageType.LLM_FUNCTION_CALL_START,
+          //   data,
+          // } as RTVIMessage);
+        }
+        break;
+      case "response.function_call_arguments.done":
+        {
+          let data: LLMFunctionCallData = {
+            function_name: msg.name,
+            tool_call_id: msg.call_id,
+            args: JSON.parse(msg.arguments),
+          };
+          this._onMessage({
+            type: LLMMessageType.LLM_FUNCTION_CALL,
+            data,
+          } as RTVIMessage);
+        }
+        break;
       default:
         console.debug("ignoring openai message", msg);
     }
@@ -583,6 +634,20 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       };
       this._openai_channel!.send(JSON.stringify(event));
     });
+    this._openai_channel.send(JSON.stringify({ type: "response.create" }));
+  }
+
+  private _sendFunctionCallResult(data: LLMFunctionCallData) {
+    if (!this._openai_channel || !data.result) return;
+    const event = {
+      type: "conversation.item.create",
+      item: {
+        type: "function_call_output",
+        call_id: data.tool_call_id,
+        output: JSON.stringify(data.result),
+      },
+    };
+    this._openai_channel.send(JSON.stringify(event));
     this._openai_channel.send(JSON.stringify({ type: "response.create" }));
   }
 }

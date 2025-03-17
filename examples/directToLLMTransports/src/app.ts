@@ -12,6 +12,7 @@ import {
 // Import core Pipecat RTVI Client and types
 import {
   LLMHelper,
+  FunctionCallParams,
   Transport,
   RTVIClient,
   RTVIEvent,
@@ -99,6 +100,9 @@ async function initBot() {
   // Create new RTVI client instance
   rtviClient = new RTVIClient(RTVIConfig);
   llmHelper = new LLMHelper({});
+  llmHelper.handleFunctionCall(async (fn: FunctionCallParams) => {
+    return await handleFunctionCall(fn.functionName, fn.arguments);
+  });
   rtviClient.registerHelper("openai", llmHelper);
 
   // Make RTVI client available globally for debugging
@@ -152,6 +156,36 @@ function initOpenAITransport() {
     session_config: {
       instructions: "You are a pirate. You are looking for buried treasure.",
       voice: "echo",
+      tools: [
+        {
+          type: "function",
+          name: "changeBackgroundColor",
+          description: "Change the background color of the page",
+          parameters: {
+            type: "object",
+            properties: {
+              color: {
+                type: "string",
+                description: "A hex value of the color",
+              },
+            },
+          },
+        },
+        {
+          type: "function",
+          name: "getWeather",
+          description: "Gets the current weather for a given location",
+          parameters: {
+            type: "object",
+            properties: {
+              location: {
+                type: "string",
+                description: "A city or location",
+              },
+            },
+          },
+        },
+      ],
     },
     initial_messages: [{ role: "user", content: "Hello" }],
   };
@@ -359,4 +393,35 @@ function updateSpeakerBubble(level: number, whom: string) {
   // Scale the bubble size based on the volume value
   const scale = 1 + volume / 50; // Adjust the divisor to control the scaling effect
   userBubble.style.transform = `scale(${scale})`;
+}
+
+async function handleFunctionCall(functionName: string, args: unknown) {
+  console.log("[EVENT] LLMFunctionCall", functionName);
+  const toolFunctions: { [key: string]: any } = {
+    changeBackgroundColor: ({ color }: { [key: string]: string }) => {
+      console.log("changing background color to", color);
+      document.body.style.backgroundColor = color;
+      return { success: true, color };
+    },
+    getWeather: async ({ location }: { [key: string]: string }) => {
+      console.log("getting weather for", location);
+      const locationReq = await fetch(
+        `http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=52c6049352e0ca9c979c3c49069b414d`
+      );
+      const locJson = await locationReq.json();
+      const loc = { lat: locJson[0].lat, lon: locJson[0].lon };
+      const exclude = ["minutely", "hourly", "daily"].join(",");
+      const weatherRec = await fetch(
+        `https://api.openweathermap.org/data/3.0/onecall?lat=${loc.lat}&lon=${loc.lon}&exclude=${exclude}&appid=52c6049352e0ca9c979c3c49069b414d`
+      );
+      const weather = await weatherRec.json();
+      return { success: true, weather: weather.current };
+    },
+  };
+  const toolFunction = toolFunctions[functionName];
+  if (toolFunction) {
+    let result = await toolFunction(args);
+    console.log("returning result", result);
+    return result;
+  }
 }
