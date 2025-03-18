@@ -146,6 +146,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       await this._daily.startLocalAudioLevelObserver(100);
   }
 
+  /**********************************/
+  /** Call Lifecycle functionality */
   async connect(
     authBundle: unknown,
     abortController: AbortController
@@ -196,6 +198,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 
   /**********************************/
+  /** Device functionality */
 
   async getAllMics(): Promise<MediaDeviceInfo[]> {
     let devices = (await this._daily.enumerateDevices()).devices;
@@ -287,6 +290,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     return tracks;
   }
 
+  /**********************************/
+  /** Bot communication */
   async sendReadyMessage(): Promise<void> {
     const p = new Promise<void>((resolve) => {
       if (this.state === "ready") {
@@ -338,6 +343,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     }
   }
 
+  /**********************************/
+  /** Private methods */
   async _connectLLM(): Promise<void> {
     const audioSender = this._senders["audio"];
     if (!audioSender) {
@@ -368,7 +375,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
 
   async _disconnectLLM(): Promise<void> {
     this._cleanup();
-    // await this._daily.leave();
   }
 
   private _attachDeviceListeners(): void {
@@ -411,19 +417,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     });
     this._openai_channel = dc;
 
-    // client.on("conversation.item.completed", ({ item }) => {
-    //   console.log("--> conversation item completed", item);
-    // });
-
-    // // Audio playout
-    // client.on("conversation.updated", async ({ item, delta }: unknown) => {
-    //   console.log("--> conversation updated", delta, item);
-    //   if (delta?.audio) {
-    //     console.log(" ----> buffering bot audio", delta.audio);
-    //     this.bufferBotAudio(delta.audio, item.id);
-    //   }
-    // });
-
     this._openai_cxn.onconnectionstatechange = (e) => {
       const state = (e.target as RTCPeerConnection)?.connectionState;
       console.debug(`connection state changed to ${state.toUpperCase()}`);
@@ -437,10 +430,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     this._openai_cxn.onicecandidateerror = (e) => {
       console.error("ice candidate error", e);
     };
-    // client.on("error", (error: Error) => {
-    //   console.error("error", error);
-    //   // mrkb: shouldn't this get passed up?
-    // });
   }
 
   async _negotiateConnection(): Promise<void> {
@@ -555,20 +544,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       case "response.done":
         console.log("BOT DONE", msg);
         break;
-      case "response.function_call_arguments.delta":
-        {
-          console.log("function call arguments delta", msg);
-          // let data: LLMFunctionCallData = {
-          //   function_name: msg.name,
-          //   tool_call_id: msg.call_id,
-          //   args: JSON.parse(msg.arguments),
-          // };
-          // this._onMessage({
-          //   type: LLMMessageType.LLM_FUNCTION_CALL_START,
-          //   data,
-          // } as RTVIMessage);
-        }
-        break;
       case "response.function_call_arguments.done":
         {
           let data: LLMFunctionCallData = {
@@ -582,6 +557,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
           } as RTVIMessage);
         }
         break;
+      case "response.function_call_arguments.delta":
       default:
         console.debug("ignoring openai message", msg);
     }
@@ -603,7 +579,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 
   private async _handleTrackStopped(ev: DailyEventObjectTrack) {
-    // TODO: Should sender track be replaced with null?
     this._callbacks.onTrackStopped?.(
       ev.track,
       ev.participant ? dailyParticipantToParticipant(ev.participant) : undefined
@@ -686,6 +661,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 }
 
+/**********************************/
+/** Daily helper functions for device handling */
 const dailyParticipantToParticipant = (p: DailyParticipant): Participant => ({
   id: p.user_id,
   local: p.local,

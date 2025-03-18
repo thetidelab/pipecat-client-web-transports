@@ -103,7 +103,7 @@ async function initBot() {
   llmHelper.handleFunctionCall(async (fn: FunctionCallParams) => {
     return await handleFunctionCall(fn.functionName, fn.arguments);
   });
-  rtviClient.registerHelper("openai", llmHelper);
+  rtviClient.registerHelper(service, llmHelper);
 
   // Make RTVI client and transport available globally for debugging
   (window as any).client = rtviClient;
@@ -421,7 +421,7 @@ async function handleFunctionCall(functionName: string, args: unknown) {
   const toolFunction = toolFunctions[functionName];
   if (toolFunction) {
     let result = await toolFunction(args);
-    console.log("returning result", result);
+    console.debug("returning result", result);
     return result;
   }
 }
