@@ -21,7 +21,7 @@ const MODEL = "models/gemini-2.0-flash-exp";
 export interface GeminiLLMServiceOptions extends LLMServiceOptions {
   initial_messages?: Array<{ content: string; role: string }>;
   api_key: string;
-  generation_config?: {
+  settings?: {
     candidate_count?: number;
     maxOutput_tokens?: number;
     temperature?: number;
@@ -66,7 +66,7 @@ export class GeminiLiveWebsocketTransport extends RealTimeWebsocketTransport {
     const service_options = this._service_options as GeminiLLMServiceOptions;
     const apiKey = service_options.api_key;
     if (!apiKey) {
-      console.error("!!! No API key provided in llm_service_optsion");
+      console.error("!!! No API key provided in llm_service_options");
       return;
     }
     const base_url = `wss://${HOST}/ws/${BIDI_PATH}`;
@@ -156,7 +156,7 @@ export class GeminiLiveWebsocketTransport extends RealTimeWebsocketTransport {
 
     const service_options = this._service_options as GeminiLLMServiceOptions;
     const model = service_options?.model ?? MODEL;
-    const generation_config = service_options?.generation_config ?? {};
+    const generation_config = service_options?.settings ?? {};
     let config = { setup: { model, generation_config } };
     await this._sendMsg(config);
 
@@ -205,24 +205,29 @@ export class GeminiLiveWebsocketTransport extends RealTimeWebsocketTransport {
 
   sendMessage(message: RTVIMessage): void {
     switch (message.type) {
-      case "send-text":
-        this._sendTextInput(message.data as string, "user");
-        break;
       case "action":
         {
           const data = message.data as RTVIActionRequestData;
-          if (data.action === "append_to_messages" && data.arguments) {
-            for (const a of data.arguments) {
-              if (a.name === "messages") {
-                const value = a.value as Array<{
-                  content: string;
-                  role: string;
-                }>;
-                for (const m of value) {
-                  this._sendTextInput(m.content, m.role);
+          switch (data.action) {
+            case "append_to_messages":
+              if (data.arguments) {
+                for (const a of data.arguments) {
+                  if (a.name === "messages") {
+                    const value = a.value as Array<{
+                      content: string;
+                      role: string;
+                    }>;
+                    for (const m of value) {
+                      this._sendTextInput(m.content, m.role);
+                    }
+                  }
                 }
               }
-            }
+              break;
+            case "get_context":
+            case "set_context":
+              console.warn("get_context and set_context are not implemented");
+              break;
           }
         }
         break;

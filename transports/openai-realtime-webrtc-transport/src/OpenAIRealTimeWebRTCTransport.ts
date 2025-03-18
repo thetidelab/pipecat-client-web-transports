@@ -1,4 +1,5 @@
 import {
+  LLMContextMessage,
   LLMFunctionCallData,
   LLMMessageType,
   Participant,
@@ -35,29 +36,31 @@ export interface OpenAIFunctionTool {
   parameters: JSONSchema;
 }
 
+export interface OpenAISessionConfig {
+  modalities?: string;
+  instructions?: string;
+  voice?:
+    | "alloy"
+    | "ash"
+    | "ballad"
+    | "coral"
+    | "echo"
+    | "sage"
+    | "shimmer"
+    | "verse";
+  input_audio_transcription?: {
+    model: "whisper-1";
+  };
+  temperature?: number;
+  max_tokens?: number | "inf";
+  tools?: Array<OpenAIFunctionTool>;
+}
+
 export interface OpenAIServiceOptions {
   api_key: string;
   model?: string;
-  initial_messages?: Array<{ content: string; role: string }>;
-  session_config?: {
-    modailities?: string;
-    instructions?: string;
-    voice?:
-      | "alloy"
-      | "ash"
-      | "ballad"
-      | "coral"
-      | "echo"
-      | "sage"
-      | "shimmer"
-      | "verse";
-    input_audio_transcription?: {
-      model: "whisper-1";
-    };
-    temperature?: number;
-    max_tokens?: number | "inf";
-    tools?: Array<OpenAIFunctionTool>;
-  };
+  initial_messages?: LLMContextMessage[];
+  settings?: OpenAISessionConfig;
 }
 
 export class OpenAIRealTimeWebRTCTransport extends Transport {
@@ -182,6 +185,18 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     this._callbacks.onTransportStateChanged?.(state);
   }
 
+  /**********************************/
+  /** OpenAI-specific functionality */
+  public updateSettings(settings: OpenAISessionConfig) {
+    this._service_options.settings = {
+      ...this._service_options.settings,
+      ...settings,
+    };
+    this._updateSession();
+  }
+
+  /**********************************/
+
   async getAllMics(): Promise<MediaDeviceInfo[]> {
     let devices = (await this._daily.enumerateDevices()).devices;
     return devices.filter((device) => device.kind === "audioinput");
@@ -245,14 +260,14 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   // Not implemented
   enableScreenShare(enable: boolean): void {
     logger.error(
-      "startScreenShare not implemented for GeminiLiveWebsocketTransport"
+      "startScreenShare not implemented for OpenAIRealTimeWebRTCTransport"
     );
     throw new Error("Not implemented");
   }
 
   public get isSharingScreen(): boolean {
     logger.error(
-      "isSharingScreen not implemented for GeminiLiveWebsocketTransport"
+      "isSharingScreen not implemented for OpenAIRealTimeWebRTCTransport"
     );
     return false;
   }
@@ -288,29 +303,38 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 
   sendMessage(message: RTVIMessage): void {
-    if (message.type === "action") {
-      const data = message.data as RTVIActionRequestData;
-      switch (data.action) {
-        case "append_to_messages":
-          if (data.arguments) {
-            for (const a of data.arguments) {
-              if (a.name === "messages") {
-                const value = a.value as Array<{
-                  content: string;
-                  role: string;
-                }>;
-                this._sendTextInput(value);
+    switch (message.type) {
+      case "action": {
+        const data = message.data as RTVIActionRequestData;
+        switch (data.action) {
+          case "append_to_messages":
+            if (data.arguments) {
+              let messages: LLMContextMessage[] = [];
+              let runImmediately = false;
+              for (const a of data.arguments) {
+                if (a.name === "messages") {
+                  messages = a.value as Array<LLMContextMessage>;
+                } else if (a.name === "run_immediately") {
+                  runImmediately = a.value as boolean;
+                }
               }
+              this._sendTextInput(messages, runImmediately);
             }
-          }
-          break;
-        case "get_context":
-        case "set_context":
-          console.warn("get_context and set_context not implemented");
-          break;
+            break;
+          case "run":
+            this._run();
+            break;
+          case "get_contex":
+          case "set_context":
+            console.warn("get_context and set_context are not implemented");
+            break;
+        }
+        break;
       }
-    } else if (message.type === LLMMessageType.LLM_FUNCTION_CALL_RESULT) {
-      this._sendFunctionCallResult(message.data as LLMFunctionCallData);
+      case LLMMessageType.LLM_FUNCTION_CALL_RESULT: {
+        this._sendFunctionCallResult(message.data as LLMFunctionCallData);
+        break;
+      }
     }
   }
 
@@ -468,7 +492,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
 
   private _updateSession() {
     const service_options = this._service_options as OpenAIServiceOptions;
-    const session_config = service_options?.session_config ?? {};
+    const session_config = service_options?.settings ?? {};
     session_config.input_audio_transcription =
       session_config.input_audio_transcription ?? { model: "whisper-1" };
     console.log("updating session", session_config);
@@ -476,7 +500,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       JSON.stringify({ type: "session.update", session: session_config })
     );
     if (service_options?.initial_messages) {
-      this._sendTextInput(service_options.initial_messages);
+      this._sendTextInput(service_options.initial_messages, true);
     }
   }
 
@@ -621,7 +645,10 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     this._callbacks.onLocalAudioLevel?.(ev.audioLevel);
   }
 
-  private _sendTextInput(messages: Array<{ content: string; role: string }>) {
+  private _sendTextInput(
+    messages: LLMContextMessage[],
+    runImmediately: boolean = false
+  ) {
     if (!this._openai_channel) return;
     messages.forEach((m) => {
       const event = {
@@ -634,7 +661,9 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       };
       this._openai_channel!.send(JSON.stringify(event));
     });
-    this._openai_channel.send(JSON.stringify({ type: "response.create" }));
+    if (runImmediately) {
+      this._run();
+    }
   }
 
   private _sendFunctionCallResult(data: LLMFunctionCallData) {
@@ -648,7 +677,12 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       },
     };
     this._openai_channel.send(JSON.stringify(event));
-    this._openai_channel.send(JSON.stringify({ type: "response.create" }));
+    this._run();
+  }
+
+  private _run() {
+    if (!this._openai_channel) return;
+    this._openai_channel?.send(JSON.stringify({ type: "response.create" }));
   }
 }
 

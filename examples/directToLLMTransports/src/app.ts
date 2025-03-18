@@ -105,8 +105,9 @@ async function initBot() {
   });
   rtviClient.registerHelper("openai", llmHelper);
 
-  // Make RTVI client available globally for debugging
+  // Make RTVI client and transport available globally for debugging
   (window as any).client = rtviClient;
+  (window as any).transport = transport;
 
   // Set up RTVI event handlers and initialize devices
   setupEventHandlers(rtviClient);
@@ -129,7 +130,7 @@ function initGeminiTransport() {
       },
       { role: "user", content: "Hello!" },
     ],
-    generation_config: {
+    settings: {
       speech_config: {
         voice_config: {
           prebuilt_voice_config: {
@@ -153,7 +154,7 @@ function initOpenAITransport() {
   // Configure OpenAI LLM service options
   const llm_service_options: OpenAIServiceOptions = {
     api_key: import.meta.env.VITE_DANGEROUS_OPENAI_API_KEY,
-    session_config: {
+    settings: {
       instructions: "You are a pirate. You are looking for buried treasure.",
       voice: "echo",
       tools: [
@@ -376,11 +377,10 @@ export async function setupEventHandlers(rtviClient: RTVIClient) {
   });
 }
 
-// Send user message to bot. The GeminiLiveWebsocketTransport expects the message
-// to be keyed under "send-text" in the RTVIMessage object.
+// Send user message to bot.
 function sendUserMessage() {
   const textInput = document.getElementById("text-input")! as HTMLInputElement;
-  llmHelper.appendToMessages({ role: "user", content: textInput.value });
+  llmHelper.appendToMessages({ role: "user", content: textInput.value }, true);
   textInput.value = "";
 }
 
