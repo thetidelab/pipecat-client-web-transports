@@ -25,6 +25,8 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
+import { dequal } from "dequal";
+
 const BASE_URL = "https://api.openai.com/v1/realtime";
 const MODEL = "gpt-4o-realtime-preview-2024-12-17";
 
@@ -34,6 +36,22 @@ export type OpenAIFunctionTool = {
   name: string;
   description: string;
   parameters: JSONSchema;
+};
+
+export type OpenAIServerVad = {
+  type: "server_vad";
+  create_response?: boolean; // defaults to true
+  interrupt_response?: boolean; // defaults to true
+  prefix_padding_ms?: number; // defaults to 300ms
+  silence_duration_ms?: number; // defaults to 500ms
+  threshold?: number; // range (0.0, 1.0); defaults to 0.5
+};
+
+export type OpenAISemanticVAD = {
+  type: "semantic_vad";
+  eagerness?: "low" | "medium" | "high" | "auto"; // defaults to "auto" (TODO: confirm this)
+  create_response?: boolean; // defaults to true
+  interrupt_response?: boolean; // defaults to true
 };
 
 export type OpenAISessionConfig = Partial<{
@@ -48,9 +66,13 @@ export type OpenAISessionConfig = Partial<{
     | "sage"
     | "shimmer"
     | "verse";
+  input_audio_noise_reduction?: {
+    type: "near_field" | "far_field";
+  };
   input_audio_transcription?: {
     model: "whisper-1";
   };
+  turn_detection?: OpenAIServerVad | OpenAISemanticVAD | null;
   temperature?: number;
   max_tokens?: number | "inf";
   tools?: Array<OpenAIFunctionTool>;
@@ -154,7 +176,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     abortController: AbortController
   ): Promise<void> {
     if (!this._openai_cxn) {
-      console.error(
+      logger.error(
         "connectLLM called before the webrtc connection is initialized. Be sure to call initializeLLM() first."
       );
       return;
@@ -194,7 +216,19 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
 
   /**********************************/
   /** OpenAI-specific functionality */
+
   public updateSettings(settings: OpenAISessionConfig) {
+    if (settings.voice && this._channelReady()) {
+      logger.warn(
+        "changing voice settings after session start is not supported"
+      );
+      delete settings.voice;
+    }
+    const newSettings = {
+      ...this._service_options.settings,
+      ...settings,
+    };
+    if (dequal(newSettings, this._service_options.settings)) return;
     this._service_options.settings = {
       ...this._service_options.settings,
       ...settings,
@@ -341,7 +375,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
             break;
           case "get_contex":
           case "set_context":
-            console.warn("get_context and set_context are not implemented");
+            logger.warn("get_context and set_context are not implemented");
             break;
         }
         break;
@@ -358,7 +392,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   async _connectLLM(): Promise<void> {
     const audioSender = this._senders["audio"];
     if (!audioSender) {
-      console.error("No audio sender found");
       let micTrack =
         this._daily.participants()?.local?.tracks?.audio?.persistentTrack;
       if (!micTrack) {
@@ -368,7 +401,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
           });
           micTrack = stream.getAudioTracks()[0];
         } catch (e) {
-          console.error(
+          logger.error(
             "Failed to get mic track. OpenAI requires audio on initial connection.",
             e
           );
@@ -403,20 +436,20 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
 
   private _attachLLMListeners(): void {
     if (!this._openai_cxn) {
-      console.error(
+      logger.error(
         "_attachLLMListeners called before the websocket is initialized. Be sure to call initializeLLM() first."
       );
       return;
     }
     this._openai_cxn.ontrack = (e) => {
-      console.debug("[openai] got track from openai", e);
+      logger.debug("[openai] got track from openai", e);
       this._botTracks[e.track.kind] = e.track;
       this._callbacks.onTrackStarted?.(e.track, botParticipant());
     };
 
     // Set up data channel for sending and receiving events
     if (this._openai_channel) {
-      console.warn('closing existing data channel "oai-events"');
+      logger.warn('closing existing data channel "oai-events"');
       this._openai_channel.close();
       this._openai_channel = null;
     }
@@ -429,7 +462,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
 
     this._openai_cxn.onconnectionstatechange = (e) => {
       const state = (e.target as RTCPeerConnection)?.connectionState;
-      console.debug(`connection state changed to ${state.toUpperCase()}`);
+      logger.debug(`connection state changed to ${state.toUpperCase()}`);
       switch (state) {
         case "closed":
         case "failed":
@@ -449,7 +482,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       }
     };
     this._openai_cxn.onicecandidateerror = (e) => {
-      console.error("ice candidate error", e);
+      logger.error("ice candidate error", e);
     };
   }
 
@@ -458,7 +491,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     const service_options = this._service_options as OpenAIServiceOptions;
     const apiKey = service_options.api_key;
     if (!apiKey) {
-      console.error("!!! No API key provided in service_options");
+      logger.error("!!! No API key provided in service_options");
       return;
     }
 
@@ -485,7 +518,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       await cxn.setRemoteDescription(answer);
     } catch (error) {
       const msg = `Failed to connect to LLM: ${error}`;
-      console.error(msg);
+      logger.error(msg);
       this.state = "error";
       throw new TransportStartError(msg);
     }
@@ -501,11 +534,12 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 
   private _updateSession() {
+    if (!this._channelReady()) return;
     const service_options = this._service_options as OpenAIServiceOptions;
     const session_config = service_options?.settings ?? {};
     session_config.input_audio_transcription =
       session_config.input_audio_transcription ?? { model: "whisper-1" };
-    console.log("updating session", session_config);
+    logger.debug("updating session", session_config);
     this._openai_channel!.send(
       JSON.stringify({ type: "session.update", session: session_config })
     );
@@ -518,7 +552,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     const type = msg.type;
     switch (type) {
       case "error":
-        console.warn("openai error", msg);
+        logger.warn("openai error", msg);
         // todo: most openai errors are recoverable. For non-recoverable ones
         // we should throw an RTVIError and disconnect.
         break;
@@ -550,7 +584,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
           this._callbacks.onBotStartedSpeaking?.();
         }
         break;
-      case "response.audio.done":
+      case "output_audio_buffer.cleared":
+      case "output_audio_buffer.stopped":
         this._callbacks.onBotStoppedSpeaking?.();
         break;
       case "response.audio_transcript.delta":
@@ -561,9 +596,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
         break;
       case "response.audio_transcript.done":
         this._callbacks.onBotTranscript?.({ text: msg.transcript });
-        break;
-      case "response.done":
-        console.log("BOT DONE", msg);
         break;
       case "response.function_call_arguments.done":
         {
@@ -580,7 +612,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
         break;
       case "response.function_call_arguments.delta":
       default:
-        console.debug("ignoring openai message", msg);
+        logger.debug("ignoring openai message", msg);
     }
   }
 
@@ -645,7 +677,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     messages: LLMContextMessage[],
     runImmediately: boolean = false
   ) {
-    if (!this._openai_channel) return;
+    if (!this._channelReady()) return;
     messages.forEach((m) => {
       const event = {
         type: "conversation.item.create",
@@ -663,7 +695,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 
   private _sendFunctionCallResult(data: LLMFunctionCallData) {
-    if (!this._openai_channel || !data.result) return;
+    if (!this._channelReady() || !data.result) return;
     const event = {
       type: "conversation.item.create",
       item: {
@@ -672,13 +704,18 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
         output: JSON.stringify(data.result),
       },
     };
-    this._openai_channel.send(JSON.stringify(event));
+    this._openai_channel!.send(JSON.stringify(event));
     this._run();
   }
 
   private _run() {
-    if (!this._openai_channel) return;
-    this._openai_channel?.send(JSON.stringify({ type: "response.create" }));
+    if (!this._channelReady) return;
+    this._openai_channel!.send(JSON.stringify({ type: "response.create" }));
+  }
+
+  private _channelReady() {
+    if (!this._openai_channel) return false;
+    return this._openai_channel?.readyState === "open";
   }
 }
 

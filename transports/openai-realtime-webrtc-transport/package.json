@@ -31,7 +31,8 @@
     "@pipecat-ai/client-js": "~0.3.5"
   },
   "dependencies": {
-    "@daily-co/daily-js": "^0.73.0"
+    "@daily-co/daily-js": "^0.73.0",
+    "dequal": "^2.0.3"
   },
   "description": "Pipecat OpenAI RealTime Transport Package",
   "author": "Daily.co",

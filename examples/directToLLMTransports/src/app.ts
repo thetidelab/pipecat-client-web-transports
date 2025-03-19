@@ -106,7 +106,6 @@ async function initBot() {
 
   // Make RTVI client and transport available globally for debugging
   (window as any).client = rtviClient;
-  (window as any).transport = transport;
 
   // Set up RTVI event handlers and initialize devices
   setupEventHandlers(rtviClient);
@@ -156,6 +155,8 @@ function initOpenAITransport() {
     settings: {
       instructions: "You are a pirate. You are looking for buried treasure.",
       voice: "echo",
+      input_audio_noise_reduction: { type: "near_field" },
+      turn_detection: { type: "semantic_vad" },
       tools: [
         {
           type: "function",
