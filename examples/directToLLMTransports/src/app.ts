@@ -69,12 +69,11 @@ async function toggleBot() {
   if (botRunning) {
     console.log("disconnecting bot");
     await disconnectBot();
-    toggleBotButton.textContent = "Connect";
   } else {
     console.log("connecting bot");
     await connectBot();
-    toggleBotButton.textContent = "Disconnect";
   }
+  toggleBotButton.textContent = botRunning ? "Disconnect" : "Connect";
 }
 
 // Initialize the bot with configuration
@@ -230,6 +229,8 @@ async function connectBot() {
     console.log("READY! Let's GO!");
   } catch (e) {
     console.error("Error connecting", e);
+    toggleBotButton.disabled = false;
+    return;
   }
   toggleBotButton.disabled = false;
   submitBtn.disabled = false;

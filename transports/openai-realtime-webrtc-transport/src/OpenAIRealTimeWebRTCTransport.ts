@@ -77,9 +77,10 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
   private _selectedSpeaker: MediaDeviceInfo | Record<string, never> = {};
 
-  private declare _botIsReadyResolve:
-    | ((value: void | PromiseLike<void>) => void)
-    | null;
+  private declare _botIsReadyResolve: {
+    resolve: (value: void | PromiseLike<void>) => void;
+    reject: (reason?: any) => void;
+  } | null;
 
   constructor(service_options: OpenAIServiceOptions) {
     super();
@@ -159,9 +160,13 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       return;
     }
 
+    if (abortController.signal.aborted) return;
+
     this.state = "connecting";
 
     await this._connectLLM();
+
+    if (abortController.signal.aborted) return;
 
     this.state = "connected";
     this._callbacks.onConnected?.();
@@ -293,18 +298,23 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   /**********************************/
   /** Bot communication */
   async sendReadyMessage(): Promise<void> {
-    const p = new Promise<void>((resolve) => {
+    const p = new Promise<void>((resolve, reject) => {
       if (this.state === "ready") {
         resolve();
       } else {
-        this._botIsReadyResolve = resolve;
+        this._botIsReadyResolve = { resolve, reject };
       }
     });
-    await p;
-    this._onMessage({
-      type: RTVIMessageType.BOT_READY,
-      data: {},
-    } as RTVIMessage);
+    try {
+      await p;
+      this._onMessage({
+        type: RTVIMessageType.BOT_READY,
+        data: {},
+      } as RTVIMessage);
+    } catch (e) {
+      logger.error("Failed to start bot");
+      throw new TransportStartError();
+    }
   }
 
   sendMessage(message: RTVIMessage): void {
@@ -423,7 +433,18 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       switch (state) {
         case "closed":
         case "failed":
-          this._cleanup();
+          this.state = "error";
+          if (this._botIsReadyResolve) {
+            this._botIsReadyResolve.reject(
+              "Connection to OpenAI failed. Check your API key."
+            );
+            this._botIsReadyResolve = null;
+          } else {
+            this._callbacks.onError?.(
+              RTVIMessage.error(`Connection to OpenAI ${state}`, true)
+            );
+          }
+          // this._cleanup();
           break;
       }
     };
@@ -504,7 +525,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       case "session.created":
         this.state = "ready";
         if (this._botIsReadyResolve) {
-          this._botIsReadyResolve();
+          this._botIsReadyResolve.resolve();
           this._botIsReadyResolve = null;
         }
         this._updateSession();

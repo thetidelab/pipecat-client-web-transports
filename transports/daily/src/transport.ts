@@ -2,6 +2,7 @@ import Daily, {
   DailyCall,
   DailyEventObjectAppMessage,
   DailyEventObjectAvailableDevicesUpdated,
+  DailyEventObjectFatalError,
   DailyEventObjectLocalAudioLevel,
   DailyEventObjectNonFatalError,
   DailyEventObjectParticipant,
@@ -482,6 +483,7 @@ export class DailyTransport extends Transport {
     );
     this._daily.on("app-message", this.handleAppMessage.bind(this));
     this._daily.on("left-meeting", this.handleLeftMeeting.bind(this));
+    this._daily.on("error", this.handleFatalError.bind(this));
     this._daily.on("nonfatal-error", this.handleNonFatalError.bind(this));
   }
 
@@ -658,6 +660,13 @@ export class DailyTransport extends Transport {
     this.state = "disconnected";
     this._botId = "";
     this._callbacks.onDisconnected?.();
+  }
+
+  private handleFatalError(ev: DailyEventObjectFatalError) {
+    logger.error("Daily fatal error", ev.errorMsg);
+    this.state = "error";
+    this._botId = "";
+    this._callbacks.onError?.(RTVIMessage.error(ev.errorMsg, true));
   }
 
   private handleNonFatalError(ev: DailyEventObjectNonFatalError) {
