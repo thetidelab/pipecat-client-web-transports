@@ -29,14 +29,14 @@ const BASE_URL = "https://api.openai.com/v1/realtime";
 const MODEL = "gpt-4o-realtime-preview-2024-12-17";
 
 type JSONSchema = { [key: string]: any };
-export interface OpenAIFunctionTool {
+export type OpenAIFunctionTool = {
   type: "function";
   name: string;
   description: string;
   parameters: JSONSchema;
-}
+};
 
-export interface OpenAISessionConfig {
+export type OpenAISessionConfig = Partial<{
   modalities?: string;
   instructions?: string;
   voice?:
@@ -54,7 +54,7 @@ export interface OpenAISessionConfig {
   temperature?: number;
   max_tokens?: number | "inf";
   tools?: Array<OpenAIFunctionTool>;
-}
+}>;
 
 export interface OpenAIServiceOptions {
   api_key: string;
