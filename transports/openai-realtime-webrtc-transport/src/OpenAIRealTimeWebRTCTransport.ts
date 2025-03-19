@@ -1,4 +1,7 @@
 import {
+  LLMContextMessage,
+  LLMFunctionCallData,
+  LLMMessageType,
   Participant,
   RTVIActionRequestData,
   RTVIClientOptions,
@@ -25,28 +28,39 @@ import Daily, {
 const BASE_URL = "https://api.openai.com/v1/realtime";
 const MODEL = "gpt-4o-realtime-preview-2024-12-17";
 
+type JSONSchema = { [key: string]: any };
+export type OpenAIFunctionTool = {
+  type: "function";
+  name: string;
+  description: string;
+  parameters: JSONSchema;
+};
+
+export type OpenAISessionConfig = Partial<{
+  modalities?: string;
+  instructions?: string;
+  voice?:
+    | "alloy"
+    | "ash"
+    | "ballad"
+    | "coral"
+    | "echo"
+    | "sage"
+    | "shimmer"
+    | "verse";
+  input_audio_transcription?: {
+    model: "whisper-1";
+  };
+  temperature?: number;
+  max_tokens?: number | "inf";
+  tools?: Array<OpenAIFunctionTool>;
+}>;
+
 export interface OpenAIServiceOptions {
   api_key: string;
   model?: string;
-  initial_messages?: Array<{ content: string; role: string }>;
-  session_config?: {
-    modailities?: string;
-    instructions?: string;
-    voice?:
-      | "alloy"
-      | "ash"
-      | "ballad"
-      | "coral"
-      | "echo"
-      | "sage"
-      | "shimmer"
-      | "verse";
-    input_audio_transcription?: {
-      model: "whisper-1";
-    };
-    temperature?: number;
-    max_tokens?: number | "inf";
-  };
+  initial_messages?: LLMContextMessage[];
+  settings?: OpenAISessionConfig;
 }
 
 export class OpenAIRealTimeWebRTCTransport extends Transport {
@@ -132,6 +146,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       await this._daily.startLocalAudioLevelObserver(100);
   }
 
+  /**********************************/
+  /** Call Lifecycle functionality */
   async connect(
     authBundle: unknown,
     abortController: AbortController
@@ -170,6 +186,19 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     this._state = state;
     this._callbacks.onTransportStateChanged?.(state);
   }
+
+  /**********************************/
+  /** OpenAI-specific functionality */
+  public updateSettings(settings: OpenAISessionConfig) {
+    this._service_options.settings = {
+      ...this._service_options.settings,
+      ...settings,
+    };
+    this._updateSession();
+  }
+
+  /**********************************/
+  /** Device functionality */
 
   async getAllMics(): Promise<MediaDeviceInfo[]> {
     let devices = (await this._daily.enumerateDevices()).devices;
@@ -234,14 +263,14 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   // Not implemented
   enableScreenShare(enable: boolean): void {
     logger.error(
-      "startScreenShare not implemented for GeminiLiveWebsocketTransport"
+      "startScreenShare not implemented for OpenAIRealTimeWebRTCTransport"
     );
     throw new Error("Not implemented");
   }
 
   public get isSharingScreen(): boolean {
     logger.error(
-      "isSharingScreen not implemented for GeminiLiveWebsocketTransport"
+      "isSharingScreen not implemented for OpenAIRealTimeWebRTCTransport"
     );
     return false;
   }
@@ -261,6 +290,8 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     return tracks;
   }
 
+  /**********************************/
+  /** Bot communication */
   async sendReadyMessage(): Promise<void> {
     const p = new Promise<void>((resolve) => {
       if (this.state === "ready") {
@@ -277,19 +308,43 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 
   sendMessage(message: RTVIMessage): void {
-    if (message.type === "action") {
-      const data = message.data as RTVIActionRequestData;
-      if (data.action === "append_to_messages" && data.arguments) {
-        for (const a of data.arguments) {
-          if (a.name === "messages") {
-            const value = a.value as Array<{ content: string; role: string }>;
-            this._sendTextInput(value);
-          }
+    switch (message.type) {
+      case "action": {
+        const data = message.data as RTVIActionRequestData;
+        switch (data.action) {
+          case "append_to_messages":
+            if (data.arguments) {
+              let messages: LLMContextMessage[] = [];
+              let runImmediately = false;
+              for (const a of data.arguments) {
+                if (a.name === "messages") {
+                  messages = a.value as Array<LLMContextMessage>;
+                } else if (a.name === "run_immediately") {
+                  runImmediately = a.value as boolean;
+                }
+              }
+              this._sendTextInput(messages, runImmediately);
+            }
+            break;
+          case "run":
+            this._run();
+            break;
+          case "get_contex":
+          case "set_context":
+            console.warn("get_context and set_context are not implemented");
+            break;
         }
+        break;
+      }
+      case LLMMessageType.LLM_FUNCTION_CALL_RESULT: {
+        this._sendFunctionCallResult(message.data as LLMFunctionCallData);
+        break;
       }
     }
   }
 
+  /**********************************/
+  /** Private methods */
   async _connectLLM(): Promise<void> {
     const audioSender = this._senders["audio"];
     if (!audioSender) {
@@ -320,7 +375,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
 
   async _disconnectLLM(): Promise<void> {
     this._cleanup();
-    // await this._daily.leave();
   }
 
   private _attachDeviceListeners(): void {
@@ -363,19 +417,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     });
     this._openai_channel = dc;
 
-    // client.on("conversation.item.completed", ({ item }) => {
-    //   console.log("--> conversation item completed", item);
-    // });
-
-    // // Audio playout
-    // client.on("conversation.updated", async ({ item, delta }: unknown) => {
-    //   console.log("--> conversation updated", delta, item);
-    //   if (delta?.audio) {
-    //     console.log(" ----> buffering bot audio", delta.audio);
-    //     this.bufferBotAudio(delta.audio, item.id);
-    //   }
-    // });
-
     this._openai_cxn.onconnectionstatechange = (e) => {
       const state = (e.target as RTCPeerConnection)?.connectionState;
       console.debug(`connection state changed to ${state.toUpperCase()}`);
@@ -389,10 +430,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     this._openai_cxn.onicecandidateerror = (e) => {
       console.error("ice candidate error", e);
     };
-    // client.on("error", (error: Error) => {
-    //   console.error("error", error);
-    //   // mrkb: shouldn't this get passed up?
-    // });
   }
 
   async _negotiateConnection(): Promise<void> {
@@ -444,7 +481,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
 
   private _updateSession() {
     const service_options = this._service_options as OpenAIServiceOptions;
-    const session_config = service_options?.session_config ?? {};
+    const session_config = service_options?.settings ?? {};
     session_config.input_audio_transcription =
       session_config.input_audio_transcription ?? { model: "whisper-1" };
     console.log("updating session", session_config);
@@ -452,7 +489,7 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       JSON.stringify({ type: "session.update", session: session_config })
     );
     if (service_options?.initial_messages) {
-      this._sendTextInput(service_options.initial_messages);
+      this._sendTextInput(service_options.initial_messages, true);
     }
   }
 
@@ -507,6 +544,20 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       case "response.done":
         console.log("BOT DONE", msg);
         break;
+      case "response.function_call_arguments.done":
+        {
+          let data: LLMFunctionCallData = {
+            function_name: msg.name,
+            tool_call_id: msg.call_id,
+            args: JSON.parse(msg.arguments),
+          };
+          this._onMessage({
+            type: LLMMessageType.LLM_FUNCTION_CALL,
+            data,
+          } as RTVIMessage);
+        }
+        break;
+      case "response.function_call_arguments.delta":
       default:
         console.debug("ignoring openai message", msg);
     }
@@ -528,7 +579,6 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
   }
 
   private async _handleTrackStopped(ev: DailyEventObjectTrack) {
-    // TODO: Should sender track be replaced with null?
     this._callbacks.onTrackStopped?.(
       ev.track,
       ev.participant ? dailyParticipantToParticipant(ev.participant) : undefined
@@ -570,7 +620,10 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     this._callbacks.onLocalAudioLevel?.(ev.audioLevel);
   }
 
-  private _sendTextInput(messages: Array<{ content: string; role: string }>) {
+  private _sendTextInput(
+    messages: LLMContextMessage[],
+    runImmediately: boolean = false
+  ) {
     if (!this._openai_channel) return;
     messages.forEach((m) => {
       const event = {
@@ -583,10 +636,33 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
       };
       this._openai_channel!.send(JSON.stringify(event));
     });
-    this._openai_channel.send(JSON.stringify({ type: "response.create" }));
+    if (runImmediately) {
+      this._run();
+    }
+  }
+
+  private _sendFunctionCallResult(data: LLMFunctionCallData) {
+    if (!this._openai_channel || !data.result) return;
+    const event = {
+      type: "conversation.item.create",
+      item: {
+        type: "function_call_output",
+        call_id: data.tool_call_id,
+        output: JSON.stringify(data.result),
+      },
+    };
+    this._openai_channel.send(JSON.stringify(event));
+    this._run();
+  }
+
+  private _run() {
+    if (!this._openai_channel) return;
+    this._openai_channel?.send(JSON.stringify({ type: "response.create" }));
   }
 }
 
+/**********************************/
+/** Daily helper functions for device handling */
 const dailyParticipantToParticipant = (p: DailyParticipant): Participant => ({
   id: p.user_id,
   local: p.local,
