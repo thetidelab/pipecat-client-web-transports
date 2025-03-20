@@ -30,6 +30,11 @@ import { dequal } from "dequal";
 const BASE_URL = "https://api.openai.com/v1/realtime";
 const MODEL = "gpt-4o-realtime-preview-2024-12-17";
 
+/**********************************
+ * OpenAI-specific types
+ *   types and comments below are based on:
+ *     gpt-4o-realtime-preview-2024-12-17
+ **********************************/
 type JSONSchema = { [key: string]: any };
 export type OpenAIFunctionTool = {
   type: "function";
@@ -49,7 +54,7 @@ export type OpenAIServerVad = {
 
 export type OpenAISemanticVAD = {
   type: "semantic_vad";
-  eagerness?: "low" | "medium" | "high" | "auto"; // defaults to "auto" (TODO: confirm this)
+  eagerness?: "low" | "medium" | "high" | "auto"; // defaults to "auto", equivalent to "medium"
   create_response?: boolean; // defaults to true
   interrupt_response?: boolean; // defaults to true
 };
@@ -68,11 +73,13 @@ export type OpenAISessionConfig = Partial<{
     | "verse";
   input_audio_noise_reduction?: {
     type: "near_field" | "far_field";
-  };
+  } | null; // defaults to null/off
   input_audio_transcription?: {
-    model: "whisper-1";
-  };
-  turn_detection?: OpenAIServerVad | OpenAISemanticVAD | null;
+    model: "whisper-1" | "gpt-4o-transcribe" | "gpt-4o-mini-transcribe";
+    language?: string;
+    prompt?: string[] | string; // gpt-4o models take a string
+  } | null; // we default this to gpt-4o-transcribe
+  turn_detection?: OpenAIServerVad | OpenAISemanticVAD | null; // defaults to server_vad
   temperature?: number;
   max_tokens?: number | "inf";
   tools?: Array<OpenAIFunctionTool>;
@@ -537,8 +544,9 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
     if (!this._channelReady()) return;
     const service_options = this._service_options as OpenAIServiceOptions;
     const session_config = service_options?.settings ?? {};
-    session_config.input_audio_transcription =
-      session_config.input_audio_transcription ?? { model: "whisper-1" };
+    if (session_config.input_audio_transcription === undefined) {
+      session_config.input_audio_transcription = { model: "gpt-4o-transcribe" };
+    }
     logger.debug("updating session", session_config);
     this._openai_channel!.send(
       JSON.stringify({ type: "session.update", session: session_config })
