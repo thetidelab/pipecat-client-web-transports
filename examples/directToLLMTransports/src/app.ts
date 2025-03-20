@@ -397,6 +397,22 @@ function updateSpeakerBubble(level: number, whom: string) {
   userBubble.style.transform = `scale(${scale})`;
 }
 
+function _generateRandomWeather() {
+  const temperature = Math.random() * 200 - 80;
+  const humidity = Math.random() * 100;
+  const conditions = ["sunny", "cloudy", "rainy", "snowy"];
+  const condition = conditions[Math.floor(Math.random() * conditions.length)];
+  const windSpeed = Math.random() * 50;
+  const windGusts = windSpeed + Math.random() * 20;
+  return {
+    temperature,
+    humidity,
+    condition,
+    windSpeed,
+    windGusts,
+  };
+}
+
 async function handleFunctionCall(functionName: string, args: unknown) {
   console.log("[EVENT] LLMFunctionCall", functionName);
   const toolFunctions: { [key: string]: any } = {
@@ -407,14 +423,20 @@ async function handleFunctionCall(functionName: string, args: unknown) {
     },
     getWeather: async ({ location }: { [key: string]: string }) => {
       console.log("getting weather for", location);
+      const key = import.meta.env.VITE_DANGEROUS_OPENWEATHER_API_KEY;
+      if (!key) {
+        const ret = { success: true, weather: _generateRandomWeather() };
+        console.log("returning weather", ret);
+        return ret;
+      }
       const locationReq = await fetch(
-        `http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=52c6049352e0ca9c979c3c49069b414d`
+        `http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=${key}`
       );
       const locJson = await locationReq.json();
       const loc = { lat: locJson[0].lat, lon: locJson[0].lon };
       const exclude = ["minutely", "hourly", "daily"].join(",");
       const weatherRec = await fetch(
-        `https://api.openweathermap.org/data/3.0/onecall?lat=${loc.lat}&lon=${loc.lon}&exclude=${exclude}&appid=52c6049352e0ca9c979c3c49069b414d`
+        `https://api.openweathermap.org/data/3.0/onecall?lat=${loc.lat}&lon=${loc.lon}&exclude=${exclude}&appid=${key}`
       );
       const weather = await weatherRec.json();
       return { success: true, weather: weather.current };
