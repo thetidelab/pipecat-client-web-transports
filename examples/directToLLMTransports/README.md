@@ -15,6 +15,7 @@ This application demonstrates a real-time voice interaction system using the RTV
 ## Prerequisites
 - Gemini API key (set as environment variable `VITE_DANGEROUS_GEMINI_API_KEY`)
 - OpenAI API key (set as environment variable `VITE_DANGEROUS_OPENAI_API_KEY`)
+- Optional [OpenWeather API](https://openweathermap.org/api) key for fetching weather. If none is provided, the app will generate something random.
 - Modern web browser with WebSocket support
 - Access to microphone
 

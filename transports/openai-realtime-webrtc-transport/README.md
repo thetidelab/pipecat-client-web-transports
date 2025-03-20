@@ -53,30 +53,66 @@ let RTVIConfig: RTVIClientOptions = {
 ### Configuration Options
 
 ```typescript
-interface OpenAIServiceOptions {
-  api_key: string;                    // Required: Your OpenAI API key
-  initial_messages?: Array<{          // Optional: Initial conversation context
-    content: string;
-    role: string;
-  }>;
-  session_config?: {
-    modailities?: string;
-    instructions?: string;
-    voice?:
-      | "alloy"
-      | "ash"
-      | "ballad"
-      | "coral"
-      | "echo"
-      | "sage"
-      | "shimmer"
-      | "verse";
-    input_audio_transcription?: {
-      model: "whisper-1";
-    };
-    temperature?: number;
-    max_tokens?: number | "inf";
-  };
+/**********************************
+ * OpenAI-specific types
+ *   types and comments below are based on:
+ *     gpt-4o-realtime-preview-2024-12-17
+ **********************************/
+type JSONSchema = { [key: string]: any };
+export type OpenAIFunctionTool = {
+  type: "function";
+  name: string;
+  description: string;
+  parameters: JSONSchema;
+};
+
+export type OpenAIServerVad = {
+  type: "server_vad";
+  create_response?: boolean; // defaults to true
+  interrupt_response?: boolean; // defaults to true
+  prefix_padding_ms?: number; // defaults to 300ms
+  silence_duration_ms?: number; // defaults to 500ms
+  threshold?: number; // range (0.0, 1.0); defaults to 0.5
+};
+
+export type OpenAISemanticVAD = {
+  type: "semantic_vad";
+  eagerness?: "low" | "medium" | "high" | "auto"; // defaults to "auto", equivalent to "medium"
+  create_response?: boolean; // defaults to true
+  interrupt_response?: boolean; // defaults to true
+};
+
+export type OpenAISessionConfig = Partial<{
+  modalities?: string;
+  instructions?: string;
+  voice?:
+    | "alloy"
+    | "ash"
+    | "ballad"
+    | "coral"
+    | "echo"
+    | "sage"
+    | "shimmer"
+    | "verse";
+  input_audio_noise_reduction?: {
+    type: "near_field" | "far_field";
+  } | null; // defaults to null/off
+  input_audio_transcription?: {
+    model: "whisper-1" | "gpt-4o-transcribe" | "gpt-4o-mini-transcribe";
+    language?: string;
+    prompt?: string[] | string; // gpt-4o models take a string
+  } | null; // we default this to gpt-4o-transcribe
+  turn_detection?: OpenAIServerVad | OpenAISemanticVAD | null; // defaults to server_vad
+  temperature?: number;
+  max_tokens?: number | "inf";
+  tools?: Array<OpenAIFunctionTool>;
+}>;
+
+export interface OpenAIServiceOptions {
+  api_key: string;
+  model?: string;
+  initial_messages?: LLMContextMessage[];
+  settings?: OpenAISessionConfig;
 }
 ```
 
@@ -97,6 +133,17 @@ llmHelper.appendToMessages({ role: "user", content: 'Hello OpenAI!' });
 ### Handling Events
 
 The transport implements the various [RTVI event handlers](https://docs.pipecat.ai/client/js/api-reference/callbacks). Check out the docs or samples for more info.
+
+### Updating Session Configuration
+
+```javascript
+transport.updateSessionConfig({
+  instructions: 'you are a an over-sharing neighbor',
+  input_audio_noise_reduction: {
+    type: 'near_field'
+  }
+});
+```
 
 ## API Reference
 
