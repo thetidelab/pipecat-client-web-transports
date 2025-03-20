@@ -684,7 +684,12 @@ export class OpenAIRealTimeWebRTCTransport extends Transport {
         item: {
           type: "message",
           role: m.role,
-          content: [{ type: "input_text", text: m.content }],
+          content: [
+            {
+              type: m.role === "assistant" ? "text" : "input_text",
+              text: m.content,
+            },
+          ],
         },
       };
       this._openai_channel!.send(JSON.stringify(event));
