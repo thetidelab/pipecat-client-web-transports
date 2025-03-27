@@ -15,7 +15,8 @@
     "@parcel/validator-typescript": "^2.12.0",
     "@swc/helpers": "^0.5.13",
     "parcel": "^2.13.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "prettier": "^3.5.3"
   },
   "peerDependencies": {
     "@daily-co/daily-js": "^0.73.0"
