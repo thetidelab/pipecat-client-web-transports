@@ -356,16 +356,16 @@ export class SmallWebRTCTransport extends Transport {
   }
 
   private async addUserMedia(): Promise<void> {
-    logger.debug(`addUserMedias this.tracks(): ${this.tracks()}`);
+    logger.debug(`addUserMedia this.tracks(): ${this.tracks()}`);
 
     let audioTrack = this.tracks().local.audio;
-    logger.debug(`addUserMedias audioTrack: ${audioTrack}`);
+    logger.debug(`addUserMedia audioTrack: ${audioTrack}`);
     if (audioTrack) {
       await this.getAudioTransceiver().sender.replaceTrack(audioTrack);
     }
 
     let videoTrack = this.tracks().local.video;
-    logger.debug(`addUserMedias videoTrack: ${videoTrack}`);
+    logger.debug(`addUserMedia videoTrack: ${videoTrack}`);
     if (videoTrack) {
       await this.getVideoTransceiver().sender.replaceTrack(videoTrack);
     }

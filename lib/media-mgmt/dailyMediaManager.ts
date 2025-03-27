@@ -360,13 +360,13 @@ export class DailyMediaManager extends MediaManager {
       ) {
         this._mediaStreamRecorder.pause();
       }
-      this._callbacks.onTrackStopped?.(
-        event.track,
-        event.participant
-          ? dailyParticipantToParticipant(event.participant)
-          : undefined,
-      );
     }
+    this._callbacks.onTrackStopped?.(
+      event.track,
+      event.participant
+        ? dailyParticipantToParticipant(event.participant)
+        : undefined,
+    );
     this.onTrackStoppedCallback?.(event);
   }
 }
