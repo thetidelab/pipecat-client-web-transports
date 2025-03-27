@@ -7,14 +7,16 @@ import {
 } from "@pipecat-ai/client-js";
 
 export abstract class MediaManager {
-  protected declare _userAudioCallback: (data: ArrayBuffer) => void;
-  protected declare _options: RTVIClientOptions;
+  declare protected _userAudioCallback: (data: ArrayBuffer) => void;
+  declare protected _options: RTVIClientOptions;
   protected _callbacks: RTVIEventCallbacks = {};
 
   protected _micEnabled: boolean;
+  protected _camEnabled: boolean;
 
   constructor() {
     this._micEnabled = true;
+    this._camEnabled = false;
   }
 
   setUserAudioCallback(userAudioCallback: (data: ArrayBuffer) => void) {
@@ -25,6 +27,7 @@ export abstract class MediaManager {
     this._options = options;
     this._callbacks = options.callbacks ?? {};
     this._micEnabled = options.enableMic ?? true;
+    this._camEnabled = options.enableCam ?? false;
   }
 
   abstract initialize(): Promise<void>;
@@ -34,8 +37,8 @@ export abstract class MediaManager {
   abstract userStartedSpeaking(): Promise<unknown>;
   abstract bufferBotAudio(
     data: ArrayBuffer | Int16Array,
-    id?: string
-  ): Int16Array;
+    id?: string,
+  ): Int16Array | undefined;
 
   abstract getAllMics(): Promise<MediaDeviceInfo[]>;
   abstract getAllCams(): Promise<MediaDeviceInfo[]>;
@@ -65,9 +68,12 @@ export class WavMediaManager extends MediaManager {
   private _initialized = false;
   private _recorderChunkSize: number | undefined = undefined;
 
-  constructor(recorderChunkSize: number| undefined = undefined, recorderSampleRate: number | undefined = 24000) {
+  constructor(
+    recorderChunkSize: number | undefined = undefined,
+    recorderSampleRate: number | undefined = 24000,
+  ) {
     super();
-    this._recorderChunkSize = recorderChunkSize
+    this._recorderChunkSize = recorderChunkSize;
     this._wavRecorder = new WavRecorder({ sampleRate: recorderSampleRate });
     this._wavStreamPlayer = new WavStreamPlayer({ sampleRate: 24000 });
   }
@@ -76,7 +82,7 @@ export class WavMediaManager extends MediaManager {
     await this._wavRecorder.begin();
     this._wavRecorder.listenForDeviceChange(null);
     this._wavRecorder.listenForDeviceChange(
-      this._handleAvailableDevicesUpdated.bind(this)
+      this._handleAvailableDevicesUpdated.bind(this),
     );
     await this._wavStreamPlayer.connect();
     this._initialized = true;
@@ -86,7 +92,7 @@ export class WavMediaManager extends MediaManager {
     if (!this._initialized) {
       await this.initialize();
     }
-    const isAlreadyRecording = this._wavRecorder.getStatus() == 'recording'
+    const isAlreadyRecording = this._wavRecorder.getStatus() == "recording";
     if (this._micEnabled && !isAlreadyRecording) {
       await this._startRecording();
     }
@@ -94,7 +100,7 @@ export class WavMediaManager extends MediaManager {
 
   async disconnect(): Promise<void> {
     if (!this._initialized) {
-      return
+      return;
     }
     await this._wavRecorder.end();
     await this._wavStreamPlayer.interrupt();
@@ -199,10 +205,10 @@ export class WavMediaManager extends MediaManager {
 
   private _handleAvailableDevicesUpdated(devices: MediaDeviceInfo[]) {
     this._callbacks.onAvailableCamsUpdated?.(
-      devices.filter((d) => d.kind === "videoinput")
+      devices.filter((d) => d.kind === "videoinput"),
     );
     this._callbacks.onAvailableMicsUpdated?.(
-      devices.filter((d) => d.kind === "audioinput")
+      devices.filter((d) => d.kind === "audioinput"),
     );
     // if the current device went away or we're using the default and
     // the default changed, reset the mic.
