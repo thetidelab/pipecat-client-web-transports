@@ -31,7 +31,7 @@
     "@pipecat-ai/client-js": "~0.3.5"
   },
   "dependencies": {
-    "@daily-co/daily-js": "^0.73.0"
+    "@daily-co/daily-js": "^0.77.0"
   },
   "description": "Pipecat Base Transport for RealTime WebSocket APIs Package",
   "author": "Daily.co",

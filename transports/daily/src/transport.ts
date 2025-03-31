@@ -365,7 +365,7 @@ export class DailyTransport extends Transport {
 
     this.state = "initializing";
 
-    const infos = await this._daily.startCamera();
+    const infos = await this._daily.startCamera(this._dailyFactoryOptions);
     const { devices } = await this._daily.enumerateDevices();
     const cams = devices.filter((d) => d.kind === "videoinput");
     const mics = devices.filter((d) => d.kind === "audioinput");
